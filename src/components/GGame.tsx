@@ -13,7 +13,7 @@ const JUMP_VELOCITY = -680
 const START_SPEED = 260
 const SPEED_GAIN = 8 // px/s added per second
 const MAX_SPEED = 650
-const WIN_SCORE = 5000
+const WIN_SCORE = 2000
 const HIGH_SCORE_KEY = 'ggame-highscore'
 
 type ObstacleKind = 'parcel' | 'stack' | 'row' | 'cone' | 'envelope'
@@ -294,7 +294,8 @@ function GGame() {
         setScore(points)
 
         if (points >= WIN_SCORE) {
-          // Reached the goal: stop spawning and bring in the parcel shop
+          // Reached the goal: clear the road ahead and bring in the parcel shop
+          g.obstacles = g.obstacles.filter((o) => o.x + o.w < g.px)
           g.shopX = WIDTH + 10
           g.parcel = 'carried'
           setStatus('delivering')
