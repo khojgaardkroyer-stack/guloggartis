@@ -53,7 +53,7 @@ function App() {
             </a>
           </div>
         </div>
-        <div className="relative mx-auto mt-12 flex max-w-6xl justify-center lg:justify-end">
+        <div className="relative mt-12 flex justify-center sm:justify-end">
           <GGame />
         </div>
         <FaqDrawer title="Ofte stillede spørgsmål" faqs={faqs} />
