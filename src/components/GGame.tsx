@@ -11,6 +11,8 @@ const GRAVITY = 2200
 const JUMP_VELOCITY = -680
 const START_SPEED = 260
 const SPEED_GAIN = 8 // px/s added per second
+const MAX_SPEED = 650
+const WIN_SCORE = 5000
 const HIGH_SCORE_KEY = 'ggame-highscore'
 
 type ObstacleKind = 'parcel' | 'stack' | 'row' | 'cone' | 'envelope'
@@ -89,7 +91,7 @@ function drawObstacle(ctx: CanvasRenderingContext2D, o: Obstacle) {
       break
   }
 }
-type Status = 'ready' | 'running' | 'over'
+type Status = 'ready' | 'running' | 'over' | 'won'
 
 function readHighScore() {
   try {
@@ -213,7 +215,7 @@ function GGame() {
       g.y = Math.min(g.y + g.vy * dt, GROUND_Y - PLAYER_H)
       if (g.y === GROUND_Y - PLAYER_H) g.vy = 0
 
-      g.speed += SPEED_GAIN * dt
+      g.speed = Math.min(g.speed + SPEED_GAIN * dt, MAX_SPEED)
       g.distance += g.speed * dt
       for (const o of g.obstacles) o.x -= g.speed * dt
       g.obstacles = g.obstacles.filter((o) => o.x + o.w > 0)
@@ -241,15 +243,17 @@ function GGame() {
           g.y + pad < bottom
         )
       })
-      setScore(points)
+      const won = points >= WIN_SCORE
+      const finalPoints = Math.min(points, WIN_SCORE)
+      setScore(finalPoints)
       draw()
 
-      if (hit) {
-        setStatus('over')
+      if (hit || won) {
+        setStatus(won ? 'won' : 'over')
         setHighScore((best) => {
-          if (points > best) {
-            saveHighScore(points)
-            return points
+          if (finalPoints > best) {
+            saveHighScore(finalPoints)
+            return finalPoints
           }
           return best
         })
@@ -268,16 +272,18 @@ function GGame() {
       ? 'Tryk for at starte'
       : status === 'over'
         ? 'Av! Tryk for at prøve igen'
-        : null
+        : status === 'won'
+          ? `🎉 Du vandt! Du nåede ${WIN_SCORE} point`
+          : null
 
   return (
     <section
       aria-label="Spil: Hop over forhindringerne"
       className="w-full max-w-[392px] rounded-3xl bg-white p-4 shadow-sm"
     >
-      <div className="mb-2 flex items-baseline justify-between gap-4 px-1">
-        <h2 className="font-bold">Hop over forhindringerne</h2>
-        <p className="font-mono text-sm text-gray-600 tabular-nums">
+      <div className="mb-2 flex items-baseline justify-between gap-2 px-1">
+        <h2 className="text-sm font-bold sm:text-base">Hop over forhindringerne</h2>
+        <p className="shrink-0 font-mono text-xs whitespace-nowrap text-gray-600 tabular-nums sm:text-sm">
           HI {String(highScore).padStart(5, '0')} {String(score).padStart(5, '0')}
         </p>
       </div>
@@ -299,12 +305,16 @@ function GGame() {
           className="block aspect-[360/150] w-full cursor-pointer touch-manipulation rounded-xl focus-visible:outline-2 focus-visible:outline-gray-900"
         />
         {message && (
-          <p className="pointer-events-none absolute inset-x-0 top-6 text-center font-semibold text-gray-700">
-            {message}
+          <p
+            className={`pointer-events-none absolute inset-x-0 top-6 text-center font-semibold ${status === 'won' ? 'text-lg text-green-700' : 'text-gray-700'}`}
+          >
+            <span className="rounded-full bg-white/90 px-3 py-1">{message}</span>
           </p>
         )}
       </div>
-      <p className="mt-2 px-1 text-xs text-gray-500">Hop med mellemrum, pil op eller et tryk.</p>
+      <p className="mt-2 px-1 text-xs text-gray-500">
+        Hop med mellemrum, pil op eller tryk. Vind ved {WIN_SCORE} point!
+      </p>
     </section>
   )
 }
