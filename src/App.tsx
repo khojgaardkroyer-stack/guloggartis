@@ -1,7 +1,8 @@
 import ggLogo from './assets/gg-logo.svg'
 import logo from './assets/gul-og-gratis-logo.png'
+import FaqList from './components/FaqList'
 import StepList from './components/StepList'
-import { facts, happyPath, rejectedPath } from './content'
+import { facts, faqs, happyPath, rejectedPath } from './content'
 
 const GUL_OG_GRATIS_URL = 'https://www.guloggratis.dk/'
 
@@ -28,11 +29,18 @@ function App() {
             er en tryg og nem løsning, der sikrer, at både køber og sælger får en sikker handel, når
             I handler genbrug online.
           </p>
+          <p className="text-lg text-gray-800">
+            Når køber betaler, står pengene på en sikret handelskonto, indtil varen er modtaget og
+            godkendt. Først derefter bliver de udbetalt til sælger. Køber har 12 timer efter
+            afhentning i pakkeshoppen til at tjekke varen, og er den ikke som beskrevet, kan den
+            afvises og sendes retur.
+          </p>
         </header>
 
         <StepList title="Hvad er SikkerHandel?" steps={facts} numbered={false} />
         <StepList title="Det fungerer sådan her" steps={happyPath} />
         <StepList title="Hvis køber IKKE godkender varerne" steps={rejectedPath} />
+        <FaqList title="Ofte stillede spørgsmål" faqs={faqs} />
 
         <div className="flex flex-wrap justify-center gap-3">
           <a
