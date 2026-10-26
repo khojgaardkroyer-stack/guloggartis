@@ -1,4 +1,4 @@
-import gLogo from './assets/g-logo.png'
+import ggLogo from './assets/gg-logo.svg'
 import logo from './assets/gul-og-gratis-logo.png'
 import StepList from './components/StepList'
 import { facts, happyPath, rejectedPath } from './content'
@@ -8,12 +8,17 @@ const GUL_OG_GRATIS_URL = 'https://www.guloggratis.dk/'
 function App() {
   return (
     <main className="relative min-h-screen bg-[#F3C91D] px-4 py-16 text-gray-900 sm:py-20">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 flex items-center justify-center overflow-hidden"
+      >
+        <img src={ggLogo} alt="" className="w-[min(110vw,1100px)] max-w-none -rotate-12 opacity-[0.07]" />
+      </div>
       <a href={GUL_OG_GRATIS_URL} className="absolute top-4 right-4 sm:top-6 sm:right-6">
-        <img src={logo} alt="Gul&Gratis" className="h-5 mix-blend-multiply sm:h-7" />
+        <img src={logo} alt="Gul&Gratis" className="h-4 sm:h-6" />
       </a>
-      <div className="mx-auto max-w-2xl space-y-8">
+      <div className="relative mx-auto max-w-2xl space-y-8">
         <header className="space-y-4 text-center">
-          <img src={gLogo} alt="" className="mx-auto h-24 sm:h-28" />
           <h1 className="text-4xl font-bold sm:text-5xl">SikkerHandel</h1>
           <p className="text-lg text-gray-800">
             SikkerHandel på{' '}
