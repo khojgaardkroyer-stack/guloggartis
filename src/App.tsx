@@ -1,5 +1,5 @@
 import StepList from './components/StepList'
-import { happyPath, rejectedPath } from './content'
+import { facts, happyPath, rejectedPath } from './content'
 
 const GUL_OG_GRATIS_URL = 'https://www.guloggratis.dk/'
 
@@ -13,10 +13,16 @@ function App() {
           </p>
           <h1 className="text-4xl font-bold sm:text-5xl">SikkerHandel</h1>
           <p className="text-lg text-gray-600">
-            Pengene ligger på en sikret handelskonto, indtil køber har godkendt varerne.
+            SikkerHandel på{' '}
+            <a href={GUL_OG_GRATIS_URL} className="font-semibold text-gray-900 underline">
+              GulogGratis.dk
+            </a>{' '}
+            er en tryg og nem løsning, der sikrer, at både køber og sælger får en sikker handel, når
+            I handler genbrug online.
           </p>
         </header>
 
+        <StepList title="Hvad er SikkerHandel?" steps={facts} numbered={false} />
         <StepList title="Det fungerer sådan her" steps={happyPath} />
         <StepList title="Hvis køber IKKE godkender varerne" steps={rejectedPath} />
 

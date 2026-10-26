@@ -26,3 +26,22 @@ export const rejectedPath: Step[] = [
   },
   { emoji: '✅', text: 'Hvis ingen problemer rapporteres, returneres pengene for varen til køber' },
 ]
+
+export const facts: Step[] = [
+  {
+    emoji: '💰',
+    text: 'Når du handler via SikkerHandel, bliver pengene først frigivet til sælger, når køber har modtaget varen og er tilfreds.',
+  },
+  {
+    emoji: '📦',
+    text: 'Pakken leveres til den pakkeshop, der ligger tættest på din folkeregisteradresse.',
+  },
+  {
+    emoji: '🔎',
+    text: 'Hvis pakken ikke dukker op, kan du efterlyse den hos den relevante fragtleverandør (DAO eller PostNord).',
+  },
+  {
+    emoji: '🏦',
+    text: 'Udbetalinger sker som hovedregel alle hverdage, typisk første bankdag efter handlen er afsluttet.',
+  },
+]
