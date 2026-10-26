@@ -20,7 +20,7 @@ function App() {
       </a>
       <div className="relative mx-auto max-w-2xl space-y-8">
         <header className="space-y-4 text-center">
-          <h1 className="text-4xl font-bold sm:text-5xl">SikkerHandel</h1>
+          <h1 className="text-4xl font-bold sm:text-5xl">Hvad er SikkerHandel?</h1>
           <p className="text-lg text-gray-800">
             SikkerHandel på{' '}
             <a href={GUL_OG_GRATIS_URL} className="font-semibold text-gray-900 underline">
@@ -37,7 +37,7 @@ function App() {
           </p>
         </header>
 
-        <StepList title="Hvad er SikkerHandel?" steps={facts} numbered={false} />
+        <StepList title="Kort fortalt" steps={facts} numbered={false} />
         <StepList title="Det fungerer sådan her" steps={happyPath} />
         <StepList title="Hvis køber IKKE godkender varerne" steps={rejectedPath} />
         <FaqList title="Ofte stillede spørgsmål" faqs={faqs} />
