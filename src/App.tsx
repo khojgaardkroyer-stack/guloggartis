@@ -29,12 +29,6 @@ function App() {
         <div className="flex flex-wrap justify-center gap-3">
           <a
             href={GUL_OG_GRATIS_URL}
-            className="flex items-center gap-2 rounded-full bg-gray-200 px-6 py-3 font-semibold transition hover:bg-gray-300"
-          >
-            <span aria-hidden="true">🛒</span> Gå på skattejagt
-          </a>
-          <a
-            href={GUL_OG_GRATIS_URL}
             className="flex items-center gap-2 rounded-full bg-yellow-300 px-6 py-3 font-semibold transition hover:bg-yellow-400"
           >
             <span aria-hidden="true">🏪</span> Kom i gang
