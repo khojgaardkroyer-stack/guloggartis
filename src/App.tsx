@@ -1,6 +1,6 @@
 import ggLogo from './assets/gg-logo.svg'
 import logo from './assets/gul-og-gratis-logo.png'
-import FaqList from './components/FaqList'
+import FaqDrawer from './components/FaqDrawer'
 import TextSection from './components/TextSection'
 import { faqs, sections } from './content'
 
@@ -8,7 +8,7 @@ const GUL_OG_GRATIS_URL = 'https://www.guloggratis.dk/'
 
 function App() {
   return (
-    <main className="relative min-h-screen bg-[#F3C91D] px-4 py-16 text-gray-900 sm:py-20">
+    <main className="relative min-h-screen bg-[#F3C91D] px-4 pt-16 pb-24 text-gray-900 sm:py-20">
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 flex items-center justify-center overflow-hidden"
@@ -40,7 +40,6 @@ function App() {
         {sections.map((section) => (
           <TextSection key={section.title} section={section} />
         ))}
-        <FaqList title="Ofte stillede spørgsmål" faqs={faqs} />
 
         <div className="flex flex-wrap justify-center gap-3">
           <a
@@ -51,6 +50,7 @@ function App() {
           </a>
         </div>
       </div>
+      <FaqDrawer title="Ofte stillede spørgsmål" faqs={faqs} />
     </main>
   )
 }
