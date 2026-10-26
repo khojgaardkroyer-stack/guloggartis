@@ -31,7 +31,7 @@ function FaqDrawer({ title, faqs }: Props) {
         onClick={() => setOpen(true)}
         aria-expanded={open}
         aria-controls="faq-drawer"
-        className="fixed bottom-4 left-4 z-20 flex items-center gap-2 rounded-full bg-gray-900 px-5 py-3 font-semibold text-white shadow-lg transition hover:bg-gray-700 sm:top-6 sm:bottom-auto sm:left-6"
+        className="fixed bottom-4 left-4 z-20 flex items-center gap-2 rounded-full bg-white px-5 py-3 font-semibold text-gray-900 shadow-lg transition hover:bg-gray-100 sm:top-6 sm:bottom-auto sm:left-6"
       >
         <span aria-hidden="true">❓</span> {title}
       </button>

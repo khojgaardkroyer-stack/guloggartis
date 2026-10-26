@@ -44,7 +44,7 @@ function App() {
         <div className="flex flex-wrap justify-center gap-3">
           <a
             href={GUL_OG_GRATIS_URL}
-            className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 font-semibold text-white transition hover:bg-gray-700"
+            className="flex items-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-gray-900 shadow-lg transition hover:bg-gray-100"
           >
             <span aria-hidden="true">🏪</span> Kom i gang
           </a>
