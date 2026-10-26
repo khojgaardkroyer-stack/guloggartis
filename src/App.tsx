@@ -1,3 +1,4 @@
+import logo from './assets/gul-og-gratis-logo.png'
 import StepList from './components/StepList'
 import { facts, happyPath, rejectedPath } from './content'
 
@@ -5,7 +6,10 @@ const GUL_OG_GRATIS_URL = 'https://www.guloggratis.dk/'
 
 function App() {
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-12 text-gray-900 sm:py-20">
+    <main className="relative min-h-screen bg-gray-50 px-4 py-16 text-gray-900 sm:py-20">
+      <a href={GUL_OG_GRATIS_URL} className="absolute top-4 right-4 sm:top-6 sm:right-6">
+        <img src={logo} alt="Gul&Gratis" className="h-5 mix-blend-multiply sm:h-7" />
+      </a>
       <div className="mx-auto max-w-2xl space-y-8">
         <header className="space-y-4 text-center">
           <p className="inline-block rounded-full bg-yellow-200 px-4 py-1 text-sm font-semibold">
