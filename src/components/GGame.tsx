@@ -13,7 +13,82 @@ const START_SPEED = 260
 const SPEED_GAIN = 8 // px/s added per second
 const HIGH_SCORE_KEY = 'ggame-highscore'
 
-type Obstacle = { x: number; w: number; h: number }
+type ObstacleKind = 'parcel' | 'stack' | 'row' | 'cone' | 'envelope'
+// lift = distance from the ground to the obstacle's bottom edge
+type Obstacle = { kind: ObstacleKind; x: number; w: number; h: number; lift: number }
+type Template = Omit<Obstacle, 'x'>
+
+// New obstacle types unlock as the score climbs
+const OBSTACLES: { minScore: number; make: () => Template }[] = [
+  { minScore: 0, make: () => ({ kind: 'parcel', w: 18, h: 18, lift: 0 }) },
+  { minScore: 0, make: () => ({ kind: 'parcel', w: 26, h: 26, lift: 0 }) },
+  { minScore: 50, make: () => ({ kind: 'cone', w: 16, h: 24, lift: 0 }) },
+  { minScore: 100, make: () => ({ kind: 'stack', w: 20, h: 38, lift: 0 }) },
+  { minScore: 150, make: () => ({ kind: 'row', w: 54, h: 18, lift: 0 }) },
+  // Low envelopes must be jumped; high ones fly over you if you stay on the ground
+  { minScore: 200, make: () => ({ kind: 'envelope', w: 26, h: 16, lift: 12 }) },
+  { minScore: 200, make: () => ({ kind: 'envelope', w: 26, h: 16, lift: 44 }) },
+]
+
+function randomObstacle(score: number): Template {
+  const available = OBSTACLES.filter((o) => score >= o.minScore)
+  return available[Math.floor(Math.random() * available.length)].make()
+}
+
+function drawParcel(ctx: CanvasRenderingContext2D, x: number, top: number, w: number, h: number) {
+  ctx.fillStyle = '#c8955c'
+  ctx.fillRect(x, top, w, h)
+  ctx.fillStyle = '#a8743f'
+  ctx.fillRect(x + w / 2 - 2, top, 4, h)
+  ctx.strokeStyle = '#7a5229'
+  ctx.lineWidth = 1
+  ctx.strokeRect(x + 0.5, top + 0.5, w - 1, h - 1)
+}
+
+function drawObstacle(ctx: CanvasRenderingContext2D, o: Obstacle) {
+  const top = GROUND_Y - o.lift - o.h
+  switch (o.kind) {
+    case 'parcel':
+      drawParcel(ctx, o.x, top, o.w, o.h)
+      break
+    case 'stack':
+      drawParcel(ctx, o.x, top + o.h / 2, o.w, o.h / 2)
+      drawParcel(ctx, o.x + 2, top, o.w - 4, o.h / 2)
+      break
+    case 'row':
+      for (let i = 0; i < 3; i++) drawParcel(ctx, o.x + i * (o.w / 3), top, o.w / 3, o.h)
+      break
+    case 'cone':
+      ctx.fillStyle = '#f97316'
+      ctx.beginPath()
+      ctx.moveTo(o.x + o.w / 2, top)
+      ctx.lineTo(o.x + o.w, GROUND_Y - 3)
+      ctx.lineTo(o.x, GROUND_Y - 3)
+      ctx.closePath()
+      ctx.fill()
+      ctx.fillStyle = '#fff'
+      ctx.fillRect(o.x + o.w * 0.3, top + o.h * 0.45, o.w * 0.4, 3)
+      ctx.fillStyle = '#c2410c'
+      ctx.fillRect(o.x - 2, GROUND_Y - 3, o.w + 4, 3)
+      break
+    case 'envelope':
+      ctx.fillStyle = '#fff'
+      ctx.strokeStyle = '#2d2d2d'
+      ctx.lineWidth = 1.5
+      ctx.fillRect(o.x, top, o.w, o.h)
+      ctx.strokeRect(o.x, top, o.w, o.h)
+      ctx.beginPath()
+      ctx.moveTo(o.x, top)
+      ctx.lineTo(o.x + o.w / 2, top + o.h * 0.6)
+      ctx.lineTo(o.x + o.w, top)
+      ctx.stroke()
+      ctx.fillStyle = '#ef4444'
+      ctx.beginPath()
+      ctx.arc(o.x + o.w / 2, top + o.h * 0.6, 2.5, 0, Math.PI * 2)
+      ctx.fill()
+      break
+  }
+}
 type Status = 'ready' | 'running' | 'over'
 
 function readHighScore() {
@@ -87,17 +162,7 @@ function GGame() {
       ctx.fillRect(x + 26, GROUND_Y + 11, 3, 1.5)
     }
 
-    // Parcels to jump over
-    for (const o of g.obstacles) {
-      const top = GROUND_Y - o.h
-      ctx.fillStyle = '#c8955c'
-      ctx.fillRect(o.x, top, o.w, o.h)
-      ctx.fillStyle = '#a8743f'
-      ctx.fillRect(o.x + o.w / 2 - 2, top, 4, o.h)
-      ctx.strokeStyle = '#7a5229'
-      ctx.lineWidth = 1
-      ctx.strokeRect(o.x + 0.5, top + 0.5, o.w - 1, o.h - 1)
-    }
+    for (const o of g.obstacles) drawObstacle(ctx, o)
 
     if (playerImg.current) {
       ctx.drawImage(playerImg.current, PLAYER_X, g.y, PLAYER_W, PLAYER_H)
@@ -153,23 +218,29 @@ function GGame() {
       for (const o of g.obstacles) o.x -= g.speed * dt
       g.obstacles = g.obstacles.filter((o) => o.x + o.w > 0)
 
+      const points = Math.floor(g.distance / 20)
+
       g.nextObstacleIn -= dt
       if (g.nextObstacleIn <= 0) {
-        const big = Math.random() < 0.35
-        g.obstacles.push({ x: WIDTH, w: big ? 26 : 18, h: big ? 26 : 18 })
-        g.nextObstacleIn = 0.9 + Math.random() * 1.1
+        const o = { x: WIDTH, ...randomObstacle(points) }
+        g.obstacles.push(o)
+        // Always leave enough room to land before the next obstacle
+        g.nextObstacleIn = 0.75 + (o.w + 40) / g.speed + Math.random() * 0.9
       }
 
       // Slightly forgiving hitbox
       const pad = 5
-      const hit = g.obstacles.some(
-        (o) =>
-          PLAYER_X + pad < o.x + o.w &&
-          PLAYER_X + PLAYER_W - pad > o.x &&
-          g.y + PLAYER_H - pad > GROUND_Y - o.h,
-      )
-
-      const points = Math.floor(g.distance / 20)
+      const hit = g.obstacles.some((o) => {
+        const top = GROUND_Y - o.lift - o.h
+        const bottom = GROUND_Y - o.lift
+        const inset = o.kind === 'cone' ? 3 : 0
+        return (
+          PLAYER_X + pad < o.x + o.w - inset &&
+          PLAYER_X + PLAYER_W - pad > o.x + inset &&
+          g.y + PLAYER_H - pad > top &&
+          g.y + pad < bottom
+        )
+      })
       setScore(points)
       draw()
 
@@ -201,11 +272,11 @@ function GGame() {
 
   return (
     <section
-      aria-label="Spil: Hop over pakkerne"
+      aria-label="Spil: Hop over forhindringerne"
       className="w-full max-w-[392px] rounded-3xl bg-white p-4 shadow-sm"
     >
       <div className="mb-2 flex items-baseline justify-between gap-4 px-1">
-        <h2 className="font-bold">Hop over pakkerne</h2>
+        <h2 className="font-bold">Hop over forhindringerne</h2>
         <p className="font-mono text-sm text-gray-600 tabular-nums">
           HI {String(highScore).padStart(5, '0')} {String(score).padStart(5, '0')}
         </p>
