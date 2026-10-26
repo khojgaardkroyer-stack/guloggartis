@@ -91,7 +91,59 @@ function drawObstacle(ctx: CanvasRenderingContext2D, o: Obstacle) {
       break
   }
 }
-type Status = 'ready' | 'running' | 'over' | 'won'
+type Status = 'ready' | 'running' | 'delivering' | 'over' | 'won'
+
+const SHOP_W = 120
+const SHOP_H = 78
+const SHOP_STOP_X = WIDTH - SHOP_W - 16
+const SHOP_DOOR_X = 18
+const SHOP_DOOR_W = 26
+const WALK_SPEED = 110
+
+function newGame() {
+  return {
+    px: PLAYER_X,
+    y: GROUND_Y - PLAYER_H,
+    vy: 0,
+    speed: START_SPEED,
+    distance: 0,
+    nextObstacleIn: 0.6,
+    obstacles: [] as Obstacle[],
+    shopX: null as number | null,
+    parcel: 'none' as 'none' | 'carried' | 'delivered',
+    celebrateIn: 0,
+  }
+}
+
+function drawShop(ctx: CanvasRenderingContext2D, x: number) {
+  const top = GROUND_Y - SHOP_H
+  ctx.fillStyle = '#F3C91D'
+  ctx.fillRect(x, top + 14, SHOP_W, SHOP_H - 14)
+  ctx.strokeStyle = '#2d2d2d'
+  ctx.lineWidth = 1.5
+  ctx.strokeRect(x, top + 14, SHOP_W, SHOP_H - 14)
+  // Sign
+  ctx.fillStyle = '#2d2d2d'
+  ctx.fillRect(x - 4, top, SHOP_W + 8, 16)
+  ctx.fillStyle = '#fff'
+  ctx.font = 'bold 10px "DM Sans", sans-serif'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText('PAKKESHOP', x + SHOP_W / 2, top + 8.5)
+  // Door
+  ctx.fillStyle = '#2d2d2d'
+  ctx.fillRect(x + SHOP_DOOR_X, GROUND_Y - 40, SHOP_DOOR_W, 40)
+  ctx.fillStyle = '#F3C91D'
+  ctx.fillRect(x + SHOP_DOOR_X + SHOP_DOOR_W - 6, GROUND_Y - 22, 3, 3)
+  // Window
+  ctx.fillStyle = '#e0f2fe'
+  ctx.fillRect(x + 56, top + 26, 50, 26)
+  ctx.strokeRect(x + 56, top + 26, 50, 26)
+  ctx.beginPath()
+  ctx.moveTo(x + 81, top + 26)
+  ctx.lineTo(x + 81, top + 52)
+  ctx.stroke()
+}
 
 function readHighScore() {
   try {
@@ -116,14 +168,7 @@ function GGame() {
   const [highScore, setHighScore] = useState(readHighScore)
 
   // Mutable game state lives in a ref so the animation loop doesn't re-render React
-  const game = useRef({
-    y: GROUND_Y - PLAYER_H,
-    vy: 0,
-    speed: START_SPEED,
-    distance: 0,
-    nextObstacleIn: 0,
-    obstacles: [] as Obstacle[],
-  })
+  const game = useRef(newGame())
   const playerImg = useRef<HTMLImageElement | null>(null)
 
   useEffect(() => {
@@ -164,22 +209,30 @@ function GGame() {
       ctx.fillRect(x + 26, GROUND_Y + 11, 3, 1.5)
     }
 
+    if (g.shopX !== null) drawShop(ctx, g.shopX)
     for (const o of g.obstacles) drawObstacle(ctx, o)
 
     if (playerImg.current) {
-      ctx.drawImage(playerImg.current, PLAYER_X, g.y, PLAYER_W, PLAYER_H)
+      ctx.drawImage(playerImg.current, g.px, g.y, PLAYER_W, PLAYER_H)
+    }
+
+    if (g.parcel === 'carried') {
+      drawParcel(ctx, g.px + 7, g.y - 13, 16, 14)
+    } else if (g.parcel === 'delivered' && g.shopX !== null) {
+      const doorX = g.shopX + SHOP_DOOR_X
+      drawParcel(ctx, doorX + 4, GROUND_Y - 14, 16, 14)
+      ctx.strokeStyle = '#15803d'
+      ctx.lineWidth = 3
+      ctx.beginPath()
+      ctx.moveTo(doorX + 6, GROUND_Y - 26)
+      ctx.lineTo(doorX + 11, GROUND_Y - 21)
+      ctx.lineTo(doorX + 20, GROUND_Y - 32)
+      ctx.stroke()
     }
   }
 
   function reset() {
-    game.current = {
-      y: GROUND_Y - PLAYER_H,
-      vy: 0,
-      speed: START_SPEED,
-      distance: 0,
-      nextObstacleIn: 0.6,
-      obstacles: [],
-    }
+    game.current = newGame()
     setScore(0)
   }
 
@@ -189,6 +242,7 @@ function GGame() {
   }
 
   function handleInput() {
+    if (status === 'delivering') return
     if (status === 'running') {
       jump()
     } else {
@@ -199,7 +253,7 @@ function GGame() {
   }
 
   useEffect(() => {
-    if (status !== 'running') {
+    if (status !== 'running' && status !== 'delivering') {
       draw()
       return
     }
@@ -210,55 +264,98 @@ function GGame() {
       const dt = Math.min((now - last) / 1000, 0.05)
       last = now
       const g = game.current
+      const delivering = g.shopX !== null
 
       g.vy += GRAVITY * dt
       g.y = Math.min(g.y + g.vy * dt, GROUND_Y - PLAYER_H)
       if (g.y === GROUND_Y - PLAYER_H) g.vy = 0
 
-      g.speed = Math.min(g.speed + SPEED_GAIN * dt, MAX_SPEED)
-      g.distance += g.speed * dt
-      for (const o of g.obstacles) o.x -= g.speed * dt
+      if (g.shopX === null) {
+        g.speed = Math.min(g.speed + SPEED_GAIN * dt, MAX_SPEED)
+      } else {
+        // Brake so the shop rolls to a stop at its spot
+        const remaining = g.shopX - SHOP_STOP_X
+        g.speed = remaining > 0 ? Math.max(Math.min(g.speed, remaining * 3), 60) : 0
+      }
+      const move =
+        g.shopX === null ? g.speed * dt : Math.min(g.speed * dt, Math.max(g.shopX - SHOP_STOP_X, 0))
+      g.distance += move
+      for (const o of g.obstacles) o.x -= move
       g.obstacles = g.obstacles.filter((o) => o.x + o.w > 0)
+      if (g.shopX !== null) g.shopX -= move
 
-      const points = Math.floor(g.distance / 20)
+      if (!delivering) {
+        const points = Math.min(Math.floor(g.distance / 20), WIN_SCORE)
+        setScore(points)
 
-      g.nextObstacleIn -= dt
-      if (g.nextObstacleIn <= 0) {
-        const o = { x: WIDTH, ...randomObstacle(points) }
-        g.obstacles.push(o)
-        // Always leave enough room to land before the next obstacle
-        g.nextObstacleIn = 0.75 + (o.w + 40) / g.speed + Math.random() * 0.9
-      }
-
-      // Slightly forgiving hitbox
-      const pad = 5
-      const hit = g.obstacles.some((o) => {
-        const top = GROUND_Y - o.lift - o.h
-        const bottom = GROUND_Y - o.lift
-        const inset = o.kind === 'cone' ? 3 : 0
-        return (
-          PLAYER_X + pad < o.x + o.w - inset &&
-          PLAYER_X + PLAYER_W - pad > o.x + inset &&
-          g.y + PLAYER_H - pad > top &&
-          g.y + pad < bottom
-        )
-      })
-      const won = points >= WIN_SCORE
-      const finalPoints = Math.min(points, WIN_SCORE)
-      setScore(finalPoints)
-      draw()
-
-      if (hit || won) {
-        setStatus(won ? 'won' : 'over')
-        setHighScore((best) => {
-          if (finalPoints > best) {
-            saveHighScore(finalPoints)
-            return finalPoints
+        if (points >= WIN_SCORE) {
+          // Reached the goal: stop spawning and bring in the parcel shop
+          g.shopX = WIDTH + 10
+          g.parcel = 'carried'
+          setStatus('delivering')
+          setHighScore((best) => {
+            if (points > best) {
+              saveHighScore(points)
+              return points
+            }
+            return best
+          })
+        } else {
+          g.nextObstacleIn -= dt
+          if (g.nextObstacleIn <= 0) {
+            const o = { x: WIDTH, ...randomObstacle(points) }
+            g.obstacles.push(o)
+            // Always leave enough room to land before the next obstacle
+            g.nextObstacleIn = 0.75 + (o.w + 40) / g.speed + Math.random() * 0.9
           }
-          return best
-        })
-        return
+
+          // Slightly forgiving hitbox
+          const pad = 5
+          const hit = g.obstacles.some((o) => {
+            const top = GROUND_Y - o.lift - o.h
+            const bottom = GROUND_Y - o.lift
+            const inset = o.kind === 'cone' ? 3 : 0
+            return (
+              g.px + pad < o.x + o.w - inset &&
+              g.px + PLAYER_W - pad > o.x + inset &&
+              g.y + PLAYER_H - pad > top &&
+              g.y + pad < bottom
+            )
+          })
+
+          if (hit) {
+            draw()
+            setStatus('over')
+            setHighScore((best) => {
+              if (points > best) {
+                saveHighScore(points)
+                return points
+              }
+              return best
+            })
+            return
+          }
+        }
+      } else if (g.shopX !== null && g.shopX <= SHOP_STOP_X && g.vy === 0) {
+        // Shop has arrived: walk to the door and hand over the parcel
+        if (g.parcel === 'carried') {
+          g.px += WALK_SPEED * dt
+          if (g.px + PLAYER_W >= g.shopX + SHOP_DOOR_X) {
+            g.px = g.shopX + SHOP_DOOR_X - PLAYER_W
+            g.parcel = 'delivered'
+            g.celebrateIn = 0.6
+          }
+        } else if (g.parcel === 'delivered') {
+          g.celebrateIn -= dt
+          if (g.celebrateIn <= 0) {
+            draw()
+            setStatus('won')
+            return
+          }
+        }
       }
+
+      draw()
       frame = requestAnimationFrame(tick)
     }
 
@@ -273,7 +370,7 @@ function GGame() {
       : status === 'over'
         ? 'Av! Tryk for at prøve igen'
         : status === 'won'
-          ? `🎉 Du vandt! Du nåede ${WIN_SCORE} point`
+          ? '📦 Pakken er afleveret! Du vandt!'
           : null
 
   return (
@@ -306,7 +403,7 @@ function GGame() {
         />
         {message && (
           <p
-            className={`pointer-events-none absolute inset-x-0 top-6 text-center font-semibold ${status === 'won' ? 'text-lg text-green-700' : 'text-gray-700'}`}
+            className={`pointer-events-none absolute inset-x-0 top-2 text-center font-semibold ${status === 'won' ? 'text-lg text-green-700' : 'text-gray-700'}`}
           >
             <span className="rounded-full bg-white/90 px-3 py-1">{message}</span>
           </p>
