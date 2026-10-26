@@ -1,48 +1,32 @@
-export type Step = {
+export type Section = {
   emoji: string
-  text: string
+  title: string
+  paragraphs: string[]
 }
 
-export const happyPath: Step[] = [
-  { emoji: '💌', text: 'Køber byder på en vare' },
-  { emoji: '🙌🏽', text: 'Sælger accepterer købers bud' },
-  { emoji: '🔐', text: 'Køber betaler. Pengene indbetales til en sikret handelskonto' },
-  { emoji: '🚚', text: 'Sælger får en pakkelabel til at sende varerne' },
-  { emoji: '📲', text: 'Når varerne er fremme, skal køber godkende varerne på Gul&Gratis' },
+export const sections: Section[] = [
   {
-    emoji: '✅',
-    text: 'Hvis køber godkender varerne, bliver pengene udbetalt til sælger og handlen er afsluttet',
-  },
-]
-
-export const rejectedPath: Step[] = [
-  {
-    emoji: '⬅️',
-    text: 'Køber bliver bedt om at købe en returlabel, som bruges til at returnere varerne',
+    emoji: '🤝',
+    title: 'Sådan foregår en handel',
+    paragraphs: [
+      'Det hele starter, når du som køber giver et bud på en vare. Siger sælger ja til dit bud, betaler du, og pengene bliver sat ind på en sikret handelskonto i stedet for at gå direkte til sælger. Sælger får derefter en pakkelabel og sender varen af sted.',
+      'Pakken bliver leveret til den pakkeshop, der ligger tættest på din folkeregisteradresse. Når du har fået varen, godkender du den på Gul&Gratis. Først da bliver pengene udbetalt til sælger, og handlen er afsluttet. Udbetalinger sker som hovedregel alle hverdage, typisk første bankdag efter handlen er afsluttet.',
+    ],
   },
   {
-    emoji: '📲',
-    text: 'Når varerne er returneret, kan sælger rapportere evt. problemer til Gul&Gratis',
-  },
-  { emoji: '✅', text: 'Hvis ingen problemer rapporteres, returneres pengene for varen til køber' },
-]
-
-export const facts: Step[] = [
-  {
-    emoji: '💰',
-    text: 'Når du handler via SikkerHandel, bliver pengene først frigivet til sælger, når køber har modtaget varen og er tilfreds.',
-  },
-  {
-    emoji: '📦',
-    text: 'Pakken leveres til den pakkeshop, der ligger tættest på din folkeregisteradresse.',
+    emoji: '↩️',
+    title: 'Hvis varen ikke er som forventet',
+    paragraphs: [
+      'Er du ikke tilfreds med varen, kan du lade være med at godkende den. Så bliver du bedt om at købe en returlabel, så du kan sende varen tilbage til sælger.',
+      'Når varen er kommet retur, har sælger mulighed for at melde eventuelle problemer til Gul&Gratis. Bliver der ikke meldt nogen problemer, får du pengene for varen tilbage.',
+    ],
   },
   {
     emoji: '🔎',
-    text: 'Hvis pakken ikke dukker op, kan du efterlyse den hos den relevante fragtleverandør (DAO eller PostNord).',
-  },
-  {
-    emoji: '🏦',
-    text: 'Udbetalinger sker som hovedregel alle hverdage, typisk første bankdag efter handlen er afsluttet.',
+    title: 'Hvis pakken ikke dukker op',
+    paragraphs: [
+      'Kan du ikke finde din pakke, kan du efterlyse den hos fragtleverandøren, som enten er DAO eller PostNord. Under ofte stillede spørgsmål kan du se, hvordan du gør.',
+    ],
   },
 ]
 

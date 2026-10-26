@@ -1,8 +1,8 @@
 import ggLogo from './assets/gg-logo.svg'
 import logo from './assets/gul-og-gratis-logo.png'
 import FaqList from './components/FaqList'
-import StepList from './components/StepList'
-import { facts, faqs, happyPath, rejectedPath } from './content'
+import TextSection from './components/TextSection'
+import { faqs, sections } from './content'
 
 const GUL_OG_GRATIS_URL = 'https://www.guloggratis.dk/'
 
@@ -37,9 +37,9 @@ function App() {
           </p>
         </header>
 
-        <StepList title="Kort fortalt" steps={facts} numbered={false} />
-        <StepList title="Det fungerer sådan her" steps={happyPath} />
-        <StepList title="Hvis køber IKKE godkender varerne" steps={rejectedPath} />
+        {sections.map((section) => (
+          <TextSection key={section.title} section={section} />
+        ))}
         <FaqList title="Ofte stillede spørgsmål" faqs={faqs} />
 
         <div className="flex flex-wrap justify-center gap-3">
