@@ -57,7 +57,7 @@ function FaqDrawer({ title, faqs }: Props) {
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Luk"
-            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-yellow-100 text-xl transition hover:bg-yellow-200"
+            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-xl text-red-700 transition hover:bg-red-200"
           >
             ×
           </button>
