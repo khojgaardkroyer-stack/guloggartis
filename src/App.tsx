@@ -2,6 +2,7 @@ import ggLogo from './assets/gg-logo.svg'
 import logo from './assets/gul-og-gratis-logo.png'
 import FaqDrawer from './components/FaqDrawer'
 import Footer from './components/Footer'
+import GGame from './components/GGame'
 import TextSection from './components/TextSection'
 import { faqs, sections } from './content'
 
@@ -51,6 +52,9 @@ function App() {
               <span aria-hidden="true">🏪</span> Kom i gang
             </a>
           </div>
+        </div>
+        <div className="relative mx-auto mt-12 flex max-w-6xl justify-center lg:justify-end">
+          <GGame />
         </div>
         <FaqDrawer title="Ofte stillede spørgsmål" faqs={faqs} />
       </main>
