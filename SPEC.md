@@ -24,19 +24,27 @@ Hver opgave har et **mål**, **hvad der er besluttet** (lav det ikke om uden at 
 
 ---
 
-## Opgave 0: Opvarmning og oprydning
+## Opgave 0: Opvarmning, oprydning og det rigtige logo
 
-**Mål:** et rent repo og en deploy, der afviser kode med fejl.
+**Mål:** et rent repo, en deploy, der afviser kode med fejl, og et spil med Gul&Gratis' rigtige logo.
 
 **Besluttet**
 
 - Fjern `numpy-2.5.4-…whl` (16 MB) og `potracer-0.0.4-….whl` fra repoet, og tilføj `*.whl` til `.gitignore`.
 - Kør `npm run lint` før `npm run build` i `.github/workflows/deploy.yml`.
+- Spilleren i minispillet bruger det forkerte logo. Skift `src/assets/g-player.png` ud med det smalle logo,
+  `src/assets/gg-narrow.svg` (to G'er side om side), som vi har lagt ind fra hovedrepoet. Slet `g-player.png`.
+- Brug SVG-filen, som den er; tegn eller trace den ikke om. Farven må gerne ændres, så den står tydeligt på
+  baggrunden.
+- Logoet er dobbelt så bredt, som det er højt, så spillerens kasse får samme forhold i stedet for de nuværende 30 × 35.
+  Kollisionerne følger kassen, så spil et par runder og justér, så spillet stadig føles fair og kan vindes.
 
 **Færdig når**
 
 - Ingen af `.whl`-filerne er tracket længere (`git ls-files` viser dem ikke).
 - Et push med en lint-fejl får workflowet til at fejle, og siden bliver ikke deployet.
+- Spilleren er det smalle GG-logo, skarpt både i normal visning og i fuld skærm, i Chrome, Safari og Firefox.
+- Et helt spil kan stadig vindes, og høje konvolutter flyver stadig over en spiller, der står på jorden.
 
 ---
 
@@ -86,7 +94,7 @@ designsystem at arbejde ud fra, i stedet for at lade det gætte.
   tokens; find ikke på nye farver eller størrelser.
 - Hvis manualen angiver en skrifttype eller et ikonsæt, så brug det. Spørg, før du tilføjer en skrifttype, der ikke er
   gratis at bruge på nettet.
-- G-spilleren og logoerne forbliver, som de er.
+- Logoerne, også spillerens logo fra Opgave 0, forbliver, som de er.
 - Tjek selv det, AI'en laver, op mod Figma. Hver værdi i temaet skal komme fra en navngiven style i Figma, ikke fra en
   værdi, værktøjet har gættet eller rundet af.
 
