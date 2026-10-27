@@ -32,7 +32,7 @@ sætter den opgaven til `Færdig` og laver PR'en. Skriver du en beskrivelse i st
 
 ## Opgave 0: Opvarmning, oprydning og det rigtige logo
 
-**Status:** I gang
+**Status:** Færdig
 
 **Mål:** et rent repo, en deploy, der afviser kode med fejl, og et spil med Gul&Gratis' rigtige logo.
 
