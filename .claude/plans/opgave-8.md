@@ -32,8 +32,9 @@ folder det sammen igen. Hver side starter med G'et.
 - **Reduced motion:** if `window.matchMedia('(prefers-reduced-motion: reduce)').matches`, open and close switch
   instantly, with no transform and no opacity transition, and close unmounts immediately.
 - **The press that opens the game is never a jump.** The game shows "Tryk for at starte" (status `ready`, as
-  today). Space activates a button on keyup, and Enter on keydown, so neither reaches the canvas. As a guard,
-  `GGame`'s canvas `onKeyDown` ignores `e.repeat`, so holding Enter or space doesn't start a run.
+  today). Space activates a button on keyup, and Enter on keydown, so neither reaches the canvas, and the canvas
+  doesn't handle Enter. No `e.repeat` guard on the canvas: holding space or ArrowUp must keep jumping as before
+  (SPEC: "tastatur ... virker som før").
 - **Focus:** on open, focus moves to the game's canvas once it has mounted, with `preventScroll: true` so the page
   doesn't jump. On close, focus returns to the G button.
 - **Closing mid-run:** `GGame`'s close handler does three things. If `status === 'running'`, it records the
@@ -44,7 +45,15 @@ folder det sammen igen. Hver side starter med G'et.
   when the status changed to `delivering`.
 - **Closing in fullscreen:** the close button is visible in fullscreen too. Clicking it first leaves fullscreen
   (`document.exitFullscreen()` when native, otherwise `setIsFull(false)`), then runs the close handler. Fullscreen
-  is closed before the fold-up animation starts.
+  is closed before the fold-up animation starts: on the native path, call `setIsFull(false)` before `onClose` too,
+  in both the resolve and reject callbacks, rather than relying on the `fullscreenchange` event having fired.
+- **Fold-up target is measured at close time.** The close animation measures the card's rect and the G's
+  position again when close starts, not the values from opening, so a resize or rotation while the game is open
+  (eg. crossing `sm`, which moves the front page's game between centered and right-aligned) still folds into the
+  right place. Measure where the G button will be, eg. with a hidden or zero-size placeholder that keeps the G's
+  slot in the layout while the game is open, or by computing it from the wrapper's alignment.
+- **The card is `inert` while closing.** During the 400 ms close phase the card gets the `inert` attribute, so no
+  tap, key or button (canvas, fullscreen, close) can start a run or act on a card that is being transformed.
 - **Not remembered:** `open` is plain React state starting at `false`; nothing goes in `localStorage`. The high
   score still uses the existing key `ggame-highscore`.
 - **No changes to `src/game/`** (engine, draw, palette).
@@ -55,7 +64,7 @@ folder det sammen igen. Hver side starter med G'et.
 1. `src/components/GGame.tsx`: add the optional `onClose` prop. Add the close button next to the fullscreen
    button, rendered only when `onClose` is set. Add a `close()` handler: exit fullscreen if active, record the
    high score if `running`, reset `game.current = newGame()`, `setScore(0)`, `setStatus('ready')`, then call
-   `onClose`. Make the canvas `onKeyDown` return early on `e.repeat`. Give the `<section>` an `id` prop (optional)
+   `onClose`. Give the `<section>` an `id` prop (optional)
    so `aria-controls` can point at it, or forward an id from `FoldableGame`. Nothing else in `GGame` changes.
 2. Create `src/components/FoldableGame.tsx`: the `open` state, the G button with its text, the FLIP open/close
    animation, the reduced-motion shortcut, and the focus moves (canvas on open via a ref or by querying the
