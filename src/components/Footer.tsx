@@ -1,14 +1,20 @@
-import { FaFacebook, FaInstagram, FaLinkedinIn, FaTiktok, FaYoutube } from 'react-icons/fa6'
+import {
+  PiFacebookLogo,
+  PiInstagramLogo,
+  PiLinkedinLogo,
+  PiTiktokLogo,
+  PiYoutubeLogo,
+} from 'react-icons/pi'
 
 // TODO: replace with the real Gul&Gratis URLs
 const GUL_OG_GRATIS_URL = 'https://www.guloggratis.dk/'
 
 const socials = [
-  { name: 'Facebook', icon: FaFacebook },
-  { name: 'LinkedIn', icon: FaLinkedinIn },
-  { name: 'Instagram', icon: FaInstagram },
-  { name: 'TikTok', icon: FaTiktok },
-  { name: 'YouTube', icon: FaYoutube },
+  { name: 'Facebook', icon: PiFacebookLogo },
+  { name: 'LinkedIn', icon: PiLinkedinLogo },
+  { name: 'Instagram', icon: PiInstagramLogo },
+  { name: 'TikTok', icon: PiTiktokLogo },
+  { name: 'YouTube', icon: PiYoutubeLogo },
 ]
 
 const columns = [
@@ -48,40 +54,39 @@ const columns = [
   },
 ]
 
+// Built after the manual's desktop footer (Figma node 994:20204)
 function Footer() {
   return (
-    <footer className="relative bg-white px-4 pt-12 pb-24 text-gray-900 sm:pb-12">
+    <footer className="relative border-t border-border-default bg-surface-gray-light px-4 pt-12 pb-24 text-text-primary sm:pb-12">
       <div className="mx-auto grid max-w-5xl gap-10 sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-4">
-          <ul className="flex flex-wrap gap-1.5">
+          <ul className="flex flex-wrap gap-2">
             {socials.map(({ name, icon: Icon }) => (
               <li key={name}>
                 <a
                   href={GUL_OG_GRATIS_URL}
                   aria-label={name}
-                  className="flex size-9 items-center justify-center rounded-full bg-gray-100 text-lg transition hover:bg-gray-200"
+                  className="flex items-center justify-center rounded-control-pill bg-button-tertiary-background p-2-5 text-icon-default transition hover:bg-state-hover-neutral"
                 >
-                  <Icon aria-hidden="true" />
+                  <Icon aria-hidden="true" className="size-5" />
                 </a>
               </li>
             ))}
           </ul>
-          <address className="text-lg leading-relaxed not-italic">
-            GulogGratis.dk A/S
-            <br />
-            Banegårdspladsen 1
-            <br />
-            5000 Odense C
+          <address className="text-sm not-italic">
+            <span className="block py-1">GulogGratis.dk A/S</span>
+            <span className="block py-1">Banegårdspladsen 1</span>
+            <span className="block py-1">5000 Odense C</span>
           </address>
         </div>
 
         {columns.map((column) => (
           <nav key={column.title} aria-label={column.title}>
-            <h2 className="mb-3 text-lg font-semibold">{column.title}</h2>
-            <ul className="space-y-1.5">
+            <h2 className="mb-2 text-base font-semibold">{column.title}</h2>
+            <ul className="space-y-1 text-base">
               {column.links.map((link) => (
                 <li key={link}>
-                  <a href={GUL_OG_GRATIS_URL} className="underline hover:no-underline">
+                  <a href={GUL_OG_GRATIS_URL} className="text-text-secondary underline hover:no-underline">
                     {link}
                   </a>
                 </li>

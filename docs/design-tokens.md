@@ -11,8 +11,8 @@ The SPA's Tailwind theme (`@theme` in `src/index.css`) comes from Gul&Gratis' de
   components, plus a read-only Plugin API script for the variables no frame on the documentation pages uses). Figma
   sizes are px; the theme uses rem at 16px, which is an exact conversion. Where a Figma variable is an alias, the
   table names the variable the SPA uses and the alias target in parentheses.
-- **Only tokens the SPA uses** are in the theme. Tailwind's own defaults are still there; stage 2 switches the
-  components over.
+- **Only tokens the SPA uses** are in the theme. Tailwind's own defaults are still there, but since stage 2 no
+  component uses a default colour; sizes use the manual's tokens where one exists.
 
 ## Token table
 
@@ -62,32 +62,32 @@ token carries the line height of the Figma style at that size.
 | Tailwind token | Value | Figma variable | Figma text styles at this size | Used for |
 | --- | --- | --- | --- | --- |
 | `--text-xs` / `--text-xs--line-height` | `0.75rem` (12) / `1rem` (16) | `text/text-xs/font-size` / `text/text-xs/line-height` | Body/XS - Regular, Body/XS - Semibold | Game title, score and help text (small view) |
-| `--text-sm` / `--text-sm--line-height` | `0.875rem` (14) / `1.25rem` (20) | `text/text-sm/font-size` / `text/text-sm/line-height` | Body/SM - Regular, Body/SM - Semibold | Game title (small view), game help text (fullscreen) |
-| `--text-base` / `--text-base--line-height` | `1rem` (16) / `1.5rem` (24) | `text/text-base/font-size` / `text/text-base/line-height` | Body/Base - Regular, Body/Base - Semibold | Buttons, game message, footer text and links, score (fullscreen) |
-| `--text-lg` / `--text-lg--line-height` | `1.125rem` (18) / `1.75rem` (28) | `text/text-lg/font-size` / `text/text-lg/line-height` | Headline/LG - Regular, Headline/LG - Bold | Intro and section body text, FAQ questions and answers, footer column titles |
+| `--text-sm` / `--text-sm--line-height` | `0.875rem` (14) / `1.25rem` (20) | `text/text-sm/font-size` / `text/text-sm/line-height` | Body/SM - Regular, Body/SM - Semibold | Game title (small view), game help text (fullscreen), footer address (as in the Figma footer) |
+| `--text-base` / `--text-base--line-height` | `1rem` (16) / `1.5rem` (24) | `text/text-base/font-size` / `text/text-base/line-height` | Body/Base - Regular, Body/Base - Semibold | Game message, footer column titles and links (as in the Figma footer), score (fullscreen) |
+| `--text-lg` / `--text-lg--line-height` | `1.125rem` (18) / `1.75rem` (28) | `text/text-lg/font-size` / `text/text-lg/line-height` | Headline/LG - Regular, Headline/LG - Bold; the size of `Button/LG - Medium` | Intro and section body text, FAQ questions and answers, buttons "Kom i gang" and FAQ (the manual's Button size L) |
 | `--text-xl` / `--text-xl--line-height` | `1.25rem` (20) / `1.75rem` (28) | `text/text-xl/font-size` / `text/text-xl/line-height` | Headline/XL - Regular, Headline/XL - Bold | Section icons, game title (fullscreen) |
 | `--text-2xl` / `--text-2xl--line-height` | `1.5rem` (24) / `2rem` (32) | `text/text-2xl/font-size` / `text/text-2xl/line-height` | Headline/2XL - Regular, Headline/2XL - Bold | Section headings, FAQ drawer title, game message (fullscreen) |
 | `--text-3xl` / `--text-3xl--line-height` | `1.875rem` (30) / `2.25rem` (36) | `text/text-3xl/font-size` / `text/text-3xl/line-height` | Display/3XL - Regular, Display/3XL - Bold | Game message (fullscreen, wide screens) |
 | `--text-4xl` / `--text-4xl--line-height` | `2.25rem` (36) / `2.5rem` (40) | `text/text-4xl/font-size` / `text/text-4xl/line-height` | Display/4XL - Regular, Display/4XL - Bold | Page title on phones |
 | `--text-5xl` / `--text-5xl--line-height` | `3rem` (48) / `3rem` (48) | `text/text-5xl/font-size` / `text/text-5xl/line-height` | Display/5XL - Regular, Display/5XL - Bold | Page title from `sm` up |
 | `--font-weight-normal` | `400` | DM Sans Regular in the `… - Regular` styles | Body/Base - Regular etc. | Body text |
-| `--font-weight-semibold` | `600` | DM Sans SemiBold in the `… - Semibold` styles | Body/Base - Semibold etc. | Buttons, links, FAQ questions, footer column titles, game message |
+| `--font-weight-semibold` | `600` | DM Sans SemiBold in the `… - Semibold` styles | Body/Base - Semibold etc. | Buttons, intro link, FAQ questions, footer column titles, game message |
 | `--font-weight-bold` | `700` | DM Sans Bold in the `… - Bold` styles | Display/5XL - Bold, Headline/2XL - Bold etc. | Page title, section headings, drawer title, game title |
 
 ### Spacing
 
 | Tailwind token | Value | Figma variable | Used for |
 | --- | --- | --- | --- |
-| `--spacing-1` | `0.25rem` (4) | `spacing/1` | Game header gaps and padding; footer link gap |
-| `--spacing-1-5` | `0.375rem` (6) | `spacing/1-5` | Score/fullscreen gap; footer link list gap |
-| `--spacing-2` | `0.5rem` (8) | `spacing/2` | Icon-to-label gap in buttons; game header margins; footer social gap |
-| `--spacing-2-5` | `0.625rem` (10) | `spacing/2-5` | Padding of round icon buttons (as in the Figma footer social icons) |
-| `--spacing-3` | `0.75rem` (12) | `spacing/3` | Button padding (vertical); gaps between paragraphs and in headings |
-| `--spacing-4` | `1rem` (16) | `spacing/4` | Page side padding; card padding (game); header gaps; logo height (phone) |
-| `--spacing-5` | `1.25rem` (20) | `spacing/5` | FAQ button horizontal padding |
-| `--spacing-6` | `1.5rem` (24) | `spacing/6` | Card padding (phone), drawer padding, button padding (horizontal), logo height (`sm`) |
-| `--spacing-8` | `2rem` (32) | `spacing/8` | Space between sections; card padding (`sm`); FAQ +/× icon size; fullscreen button size |
-| `--spacing-10` | `2.5rem` (40) | `spacing/10` | Section icon and close button size; footer column gap; footer social icon size |
+| `--spacing-1` | `0.25rem` (4) | `spacing/1` | Game header gaps and padding; message pill vertical padding; space between footer links and address lines (as in the Figma footer) |
+| `--spacing-1-5` | `0.375rem` (6) | `spacing/1-5` | Score/fullscreen gap |
+| `--spacing-2` | `0.5rem` (8) | `spacing/2` | Icon-to-label gap in buttons; game header margins; footer social gap; footer column title margin; padding of the small round icon buttons (drawer close, fullscreen; as the Figma modal's close button) |
+| `--spacing-2-5` | `0.625rem` (10) | `spacing/2-5` | Button padding (vertical, Button size L); padding of the footer social icons (as in the Figma footer) |
+| `--spacing-3` | `0.75rem` (12) | `spacing/3` | Gaps between paragraphs and in headings; message pill horizontal padding |
+| `--spacing-4` | `1rem` (16) | `spacing/4` | Page side padding; game frame padding; header gaps; drawer header vertical padding; logo height (phone); icon size in the small round icon buttons and FAQ +/× |
+| `--spacing-5` | `1.25rem` (20) | `spacing/5` | Button padding (horizontal, Button size L); footer social icon size |
+| `--spacing-6` | `1.5rem` (24) | `spacing/6` | Card padding (phone), drawer padding, logo height (`sm`) |
+| `--spacing-8` | `2rem` (32) | `spacing/8` | Space between sections; card padding (`sm`); FAQ +/× circle; button icon size (Button size L) |
+| `--spacing-10` | `2.5rem` (40) | `spacing/10` | Section icon circle; footer column gap |
 | `--spacing-12` | `3rem` (48) | `spacing/12` | Space above the game; footer top padding |
 | `--spacing-16` | `4rem` (64) | `spacing/16` | Page top padding (phone) |
 | `--spacing-20` | `5rem` (80) | `spacing/20` | Page vertical padding (`sm`) |
@@ -165,10 +165,13 @@ close.
 
 | Old value | Where | Token | Figma variable or style | Note |
 | --- | --- | --- | --- | --- |
-| `size-7` (28px) | Fullscreen toggle | `--spacing-8` (32) | `spacing/8` | No 28 in the manual; 24 (`spacing/6`) and 32 are equally near. 32 is the bigger tap target. |
-| `size-9` (36px) | Footer social icons | `--spacing-10` (40) | `spacing/10` | No 36; 32 and 40 are equally near. The Figma footer's social icons are 40 (20 icon + `spacing/2-5` padding on each side). |
+| `size-7` (28px) | Fullscreen toggle | 32 in total: `--spacing-4` icon + `--spacing-2` padding | `spacing/4`, `spacing/2` | No 28 in the manual. Built like the Figma modal's close button (`button-icon`: 16 icon, `spacing/2` padding = 32). |
+| `size-10` (40px) | Drawer close button | 32 in total: `--spacing-4` icon + `--spacing-2` padding | `spacing/4`, `spacing/2` | Stage 2: the Figma modal's close button is 32, so the drawer's close button follows it. |
+| `size-9` (36px) | Footer social icons | 40 in total: `--spacing-5` icon + `--spacing-2-5` padding | `spacing/5`, `spacing/2-5` | No 36. The Figma footer's social icons are 40 (20 icon + `spacing/2-5` padding on each side). |
 | `gap-1.5` (6px) | Footer social icons | `--spacing-2` (8) | `spacing/2` | `spacing/1-5` exists, but the Figma footer uses 8 between social icons. |
-| `leading-relaxed` (1.625) | Section body, footer address | `--text-lg--line-height` (28) | `text/text-lg/line-height` | The manual sets one line height per size. |
+| `px-6 py-3`, `px-5 py-3`, base size | "Kom i gang" and FAQ buttons | `--spacing-5` / `--spacing-2-5`, `--text-lg`, `--spacing-8` icon | `spacing/5`, `spacing/2-5`, `text/text-lg/*` | Stage 2: the manual's Button size L (Figma `6268:1089`). 52 tall with the 32 icon, like the Figma component (was 48). |
+| `text-lg` titles, `space-y-1.5` links, `text-lg` address | Footer | `--text-base` titles and links, `--text-sm` address, `--spacing-1` | `text/text-base/*`, `text/text-sm/*`, `spacing/1` | Stage 2: as in the Figma footer (`994:20204`). Links use `--color-text-secondary`. |
+| `leading-relaxed` (1.625) | Section body | `--text-lg--line-height` (28) | `text/text-lg/line-height` | The manual sets one line height per size. |
 | `leading-snug` (1.375) | FAQ answers | `--text-lg--line-height` (28) | `text/text-lg/line-height` | As above. |
 | `font-medium` (500), not used today | Figma `Button/* - Medium` styles | `--font-weight-semibold` (600) | `Body/* - Semibold` | DM Sans 500 is not loaded and adding a weight is out of scope, so buttons stay SemiBold. |
 | `shadow-sm` | Section cards, game frame | `--shadow-card-shadow` | `card-shadow` | The manual's only shadow style. |
@@ -182,4 +185,5 @@ close.
 - `max-w-[392px]` and `aspect-[360/150]`: measurements of the game itself.
 - `w-[min(110vw,1100px)]`, `-rotate-12` and `opacity-[0.07]` on the background watermark: placement of the logo,
   not a colour or a size from the manual.
-- `font-mono` on the game score: the manual has no monospace style. Stage 2 decides whether the score keeps it.
+- `font-mono` on the game score was removed in stage 2: the manual has no monospace style. The score is DM Sans with
+  `tabular-nums`, so the digits still don't jump.

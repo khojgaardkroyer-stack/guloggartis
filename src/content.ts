@@ -1,12 +1,16 @@
+import type { IconType } from 'react-icons'
+import { PiArrowUUpLeft, PiHandshake, PiMagnifyingGlass } from 'react-icons/pi'
+
 export type Section = {
-  emoji: string
+  /** Phosphor icon shown next to the heading */
+  icon: IconType
   title: string
   paragraphs: string[]
 }
 
 export const sections: Section[] = [
   {
-    emoji: '🤝',
+    icon: PiHandshake,
     title: 'Sådan foregår en handel',
     paragraphs: [
       'Det hele starter, når du som køber giver et bud på en vare. Siger sælger ja til dit bud, betaler du, og pengene bliver sat ind på en sikret handelskonto i stedet for at gå direkte til sælger. Sælger får derefter en pakkelabel og sender varen af sted.',
@@ -14,7 +18,7 @@ export const sections: Section[] = [
     ],
   },
   {
-    emoji: '↩️',
+    icon: PiArrowUUpLeft,
     title: 'Hvis varen ikke er som forventet',
     paragraphs: [
       'Er du ikke tilfreds med varen, kan du lade være med at godkende den. Så bliver du bedt om at købe en returlabel, så du kan sende varen tilbage til sælger.',
@@ -22,7 +26,7 @@ export const sections: Section[] = [
     ],
   },
   {
-    emoji: '🔎',
+    icon: PiMagnifyingGlass,
     title: 'Hvis pakken ikke dukker op',
     paragraphs: [
       'Kan du ikke finde din pakke, kan du efterlyse den hos fragtleverandøren, som enten er DAO eller PostNord. Under ofte stillede spørgsmål kan du se, hvordan du gør.',

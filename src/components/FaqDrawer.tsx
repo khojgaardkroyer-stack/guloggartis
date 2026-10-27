@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { PiPlus, PiQuestion, PiX } from 'react-icons/pi'
 import type { Faq } from '../content'
 
 type Props = {
@@ -31,15 +32,15 @@ function FaqDrawer({ title, faqs }: Props) {
         onClick={() => setOpen(true)}
         aria-expanded={open}
         aria-controls="faq-drawer"
-        className="fixed bottom-4 left-4 z-20 flex items-center gap-2 rounded-full bg-white px-5 py-3 font-semibold text-gray-900 shadow-lg transition hover:bg-gray-100 sm:top-6 sm:bottom-auto sm:left-6"
+        className="fixed bottom-4 left-4 z-20 flex items-center gap-2 rounded-control-pill bg-button-tertiary-background px-5 py-2-5 text-lg font-semibold text-text-primary shadow-card-shadow transition hover:bg-state-hover-neutral sm:top-6 sm:bottom-auto sm:left-6"
       >
-        <span aria-hidden="true">❓</span> {title}
+        <PiQuestion aria-hidden="true" className="size-8 text-icon-default" /> {title}
       </button>
 
       <div
         aria-hidden="true"
         onClick={() => setOpen(false)}
-        className={`fixed inset-0 z-30 bg-black/40 transition-opacity ${open ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
+        className={`fixed inset-0 z-30 bg-surface-overlay-gray transition-opacity ${open ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
       />
 
       <aside
@@ -48,33 +49,34 @@ function FaqDrawer({ title, faqs }: Props) {
         aria-modal="true"
         aria-label={title}
         inert={!open}
-        className={`fixed inset-y-0 left-0 z-40 flex w-full max-w-md flex-col bg-white transition duration-300 ${open ? 'translate-x-0 shadow-xl' : '-translate-x-full'}`}
+        className={`fixed inset-y-0 left-0 z-40 flex w-full max-w-md flex-col bg-surface-white text-text-primary transition duration-300 ${open ? 'translate-x-0 shadow-card-shadow' : '-translate-x-full'}`}
       >
-        <div className="flex items-center justify-between gap-4 border-b border-gray-200 p-6">
+        {/* Header as in the manual's modal: Headline/2XL - Bold and a grey round close button */}
+        <div className="flex items-center justify-between gap-4 border-b border-border-default px-6 py-4">
           <h2 className="text-2xl font-bold">{title}</h2>
           <button
             ref={closeButton}
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Luk"
-            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-xl text-red-700 transition hover:bg-red-200"
+            className="flex shrink-0 items-center justify-center rounded-control-pill bg-button-secondary-background p-2 text-icon-default transition hover:bg-state-hover-neutral"
           >
-            ×
+            <PiX aria-hidden="true" className="size-4" />
           </button>
         </div>
-        <div className="flex-1 divide-y divide-gray-200 overflow-y-auto px-6">
+        <div className="flex-1 divide-y divide-border-divider overflow-y-auto px-6">
           {faqs.map((faq) => (
             <details key={faq.question} className="group py-4">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-semibold">
                 {faq.question}
                 <span
                   aria-hidden="true"
-                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-yellow-100 transition group-open:rotate-45"
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-yellow-light text-icon-default transition group-open:rotate-45"
                 >
-                  +
+                  <PiPlus className="size-4" />
                 </span>
               </summary>
-              <div className="mt-3 space-y-3 text-lg leading-snug text-gray-700">
+              <div className="mt-3 space-y-3 text-lg">
                 {faq.answer.map((paragraph) => (
                   <p key={paragraph}>{paragraph}</p>
                 ))}
