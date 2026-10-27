@@ -1,269 +1,274 @@
-# SikkerHandel SPA: next steps
+# SikkerHandel SPA: næste skridt
 
-This is the work plan for the rest of the week. The tasks are in priority order: finish one before you start the next,
-and open one pull request per task against `main`. If you run out of time, stopping after Task 5 is fine. Tasks 6–7
-and the stretch list are bonus work.
+Det her er arbejdsplanen for resten af ugen. Opgaverne står i prioriteret rækkefølge: gør én færdig, før du starter
+på den næste, og lav én pull request pr. opgave mod `main`. Hvis du løber tør for tid, er det helt fint at stoppe
+efter Opgave 5. Opgave 6–7 og ekstraopgaverne er bonus.
 
-Each task has a **goal**, **what is decided** (don't change these without asking), **what is up to you**, and
-**done when** (the acceptance criteria we review against). Estimates are rough. If a task takes more than twice its
-estimate, stop and ask.
+Hver opgave har et **mål**, **hvad der er besluttet** (lav det ikke om uden at spørge), **hvad der er op til dig** og
+**færdig når** (de kriterier, vi gennemgår din PR ud fra). Tidsestimaterne er grove. Hvis en opgave tager mere end
+dobbelt så lang tid som estimeret, så stop og spørg.
 
-## Ground rules
+## Grundregler
 
-- All text visitors see stays in Danish and keeps the tone of the current page. Code, commits and PR titles are in
-  English.
-- `npm run lint` and `npm run build` pass on every PR.
-- The page must work on a phone (375 px wide) as well as on desktop. Check both before you ask for review.
-- Don't add a dependency when a few lines of code do the job. When you do add one, say why in the PR.
-- After Task 2, all new UI uses the tokens and components from the design manual.
-- Keep the page fast. The 3D library (Task 4) must not slow down the first load of the front page.
-
----
-
-## Task 0: Warm-up and cleanup (½ hour)
-
-**Goal:** a clean repo and a deploy that refuses broken code.
-
-**Decided**
-
-- Remove `numpy-2.5.4-…whl` (16 MB) and `potracer-0.0.4-….whl` from the repo, and add `*.whl` to `.gitignore`.
-- In `.github/workflows/deploy.yml`, run `npm run lint` before `npm run build`.
-
-**Done when**
-
-- Neither `.whl` file is tracked any more (`git ls-files` doesn't list them).
-- A push with a lint error fails the workflow and does not deploy.
+- Al tekst, som besøgende ser, er på dansk og holder tonen fra den nuværende side. Kode, commits og PR-titler er på
+  engelsk.
+- `npm run lint` og `npm run build` skal køre uden fejl på hver PR.
+- Siden skal virke på en telefon (375 px bred) og på desktop. Tjek begge, før du beder om review.
+- Tilføj ikke en afhængighed, hvis et par linjer kode kan klare det. Når du tilføjer en, så skriv hvorfor i PR'en.
+- Efter Opgave 2 bruger al ny UI tokens og komponenter fra designmanualen.
+- Hold siden hurtig. 3D-biblioteket (Opgave 4) må ikke gøre forsidens første indlæsning langsommere.
 
 ---
 
-## Task 1: Tests, and split the game's logic from its drawing (1 day)
+## Opgave 0: Opvarmning og oprydning (½ time)
 
-**Goal:** the game's rules can be tested without a browser, and the drawing can be swapped out later. Task 4 depends
-on this.
+**Mål:** et rent repo og en deploy, der afviser kode med fejl.
 
-`src/components/GGame.tsx` currently mixes three things in one component: the game rules (gravity, jumping, spawning
-obstacles, collisions, score), the canvas drawing, and the React UI around it.
+**Besluttet**
 
-**Decided**
+- Fjern `numpy-2.5.4-…whl` (16 MB) og `potracer-0.0.4-….whl` fra repoet, og tilføj `*.whl` til `.gitignore`.
+- Kør `npm run lint` før `npm run build` i `.github/workflows/deploy.yml`.
 
-- Add Vitest (`npm run test`), and run it in the deploy workflow next to lint.
-- Move the game rules into plain TypeScript with no React and no canvas, e.g. `src/game/engine.ts`. One function
-  advances the game by one time step, `step(state, dtSeconds, input) => state`, and the rest are small helpers.
-- The canvas drawing becomes a function that takes the game state and a canvas context, and only draws.
-- The game must look and play exactly as it does today. This task is a refactor, not a redesign.
+**Færdig når**
 
-**Up to you:** file names, how the state is shaped, and whether `step` mutates the state or returns a new one.
-
-**Done when**
-
-- Tests cover at least: a jump lands back on the ground, hitting each obstacle type ends the game, a high envelope
-  passes over a player standing on the ground, new obstacle types only appear after their `minScore`, and the game is
-  won at `WIN_SCORE`.
-- `GGame.tsx` holds no physics or collision code.
-- Side by side with the live site, nobody can tell the difference.
+- Ingen af `.whl`-filerne er tracket længere (`git ls-files` viser dem ikke).
+- Et push med en lint-fejl får workflowet til at fejle, og siden bliver ikke deployet.
 
 ---
 
-## Task 2: Match the Gul&Gratis design manual, with Figma in Claude Code (1 day)
+## Opgave 1: Tests, og del spillets logik op fra tegningen (1 dag)
 
-**Goal:** the SPA looks like part of guloggratis.dk instead of its own thing. You'll also learn to give an AI tool a
-design system to work from instead of letting it guess.
+**Mål:** spillets regler kan testes uden en browser, og tegningen kan skiftes ud senere. Opgave 4 bygger på det her.
 
-**Decided**
+`src/components/GGame.tsx` blander i dag tre ting i én komponent: spillets regler (tyngdekraft, hop, nye
+forhindringer, kollisioner, point), tegningen på canvas og React-UI'en omkring det.
 
-- The source of truth is the Gul&Gratis design manual in Figma: _link TBD_. Ask for access if you can't open it.
-- Connect Claude Code to Figma's MCP server: `claude mcp add --transport http figma https://mcp.figma.com/mcp`, then
-  run `/mcp` in Claude Code and log in with your Figma account. Figma limits MCP use on view-only and free seats, so
-  ask if you run into a limit rather than working around it.
-- Do the design tokens first: colours, typography, spacing, corner radius and shadows. They go in the Tailwind theme
-  (`@theme` in `src/index.css`), named after the styles in Figma. After that, no component uses a bracket colour such
-  as `bg-[#F3C91D]`, or a bracket size where the manual has a token. Game geometry such as `aspect-[360/150]` is fine.
-- Then update the UI on the page to the manual: headings, body text, links, buttons, the FAQ drawer, the footer, and
-  the frame and score display around the game. Where the manual has a component, use it. Where it doesn't, build from
-  the tokens; don't invent new colours or sizes.
-- If the manual specifies a font or icon set, use it. Ask before adding a font that isn't free to use on the web.
-- The G player and the logos stay as they are.
-- Check what the AI produces against Figma yourself. Every value in the theme must come from a named Figma style, not
-  from a value the tool guessed or rounded.
-- Tasks 3–7 build new UI in this design. That's why this task comes before them.
+**Besluttet**
 
-**Up to you:** how you work with Claude and Figma: what you ask it, in what order, and what you do by hand.
+- Tilføj Vitest (`npm run test`), og kør det i deploy-workflowet sammen med lint.
+- Flyt spillets regler over i ren TypeScript uden React og uden canvas, fx `src/game/engine.ts`. Én funktion rykker
+  spillet ét tidsskridt frem, `step(state, dtSeconds, input) => state`, og resten er små hjælpefunktioner.
+- Canvas-tegningen bliver en funktion, der tager spillets tilstand og en canvas-kontekst og kun tegner.
+- Spillet skal se ud og spille præcis som i dag. Opgaven er en refaktorering, ikke et redesign.
 
-**Done when**
+**Op til dig:** filnavne, hvordan tilstanden er bygget op, og om `step` ændrer tilstanden eller returnerer en ny.
 
-- `grep -rn -- '-\[#' src` finds nothing (no colour is hard-coded any more).
-- The PR has before/after screenshots on desktop and on a phone, and a table matching each theme token to its Figma
-  style.
-- The PR description has a short note on the workflow: which prompts worked, what the AI got wrong, and what you
-  fixed by hand. This note is as important as the code; we'll use it in the team.
+**Færdig når**
+
+- Testene dækker mindst: et hop lander på jorden igen, et sammenstød med hver type forhindring slutter spillet, en
+  høj konvolut flyver over en spiller, der står på jorden, nye typer forhindringer dukker først op efter deres
+  `minScore`, og spillet er vundet ved `WIN_SCORE`.
+- `GGame.tsx` indeholder ingen kode til fysik eller kollisioner.
+- Side om side med den live side kan ingen se forskel.
 
 ---
 
-## Task 3: Routing and a mock 404 page with the game (1 day)
+## Opgave 2: Følg Gul&Gratis' designmanual med Figma i Claude Code (1 dag)
 
-**Goal:** the SPA gets more than one page, and a wrong URL shows a Gul&Gratis-style 404 page where you can play the
-game.
+**Mål:** SPA'en ligner en del af guloggratis.dk i stedet for sin egen ting. Du lærer også at give et AI-værktøj et
+designsystem at arbejde ud fra, i stedet for at lade det gætte.
 
-**Decided**
+**Besluttet**
 
-- Use React Router (or a router of similar size). The current page stays at `/`.
-- Any unknown URL shows the 404 page.
-- The site is served from `/guloggartis/` on GitHub Pages, so the router uses that as its base path (Vite exposes it
-  as `import.meta.env.BASE_URL`).
-- GitHub Pages doesn't know about client-side routes. Opening `https://khojgaardkroyer-stack.github.io/guloggartis/foo`
-  directly, or refreshing it, gets GitHub's own 404 page unless we ship a `404.html`. Copy `dist/index.html` to
-  `dist/404.html` as part of `npm run build`. Don't switch to hash URLs (`/#/foo`).
-- The 404 page copies the layout of the real one on guloggratis.dk. Open any URL that doesn't exist there (e.g.
-  `https://www.guloggratis.dk/findes-ikke`) and match its structure, heading, text and buttons. Keep the yellow
-  background and header/footer of this SPA around it.
-- The game appears on the 404 page as a playable element. It's the same component as on the front page, not a copy.
-- The 404 page has a link back to `/`.
+- Facit er Gul&Gratis' designmanual i Figma: _link følger_. Spørg efter adgang, hvis du ikke kan åbne den.
+- Forbind Claude Code til Figmas MCP-server: `claude mcp add --transport http figma https://mcp.figma.com/mcp`, kør
+  derefter `/mcp` i Claude Code, og log ind med din Figma-konto. Figma begrænser brugen af MCP på gratis pladser og
+  pladser, der kun kan se filer, så spørg, hvis du rammer en grænse, i stedet for at finde en vej udenom.
+- Start med design-tokens: farver, typografi, afstande, hjørneradius og skygger. De skal i Tailwind-temaet (`@theme` i
+  `src/index.css`) og hedde det samme som styles i Figma. Derefter må ingen komponent bruge en farve i firkantede
+  parenteser som `bg-[#F3C91D]`, eller en størrelse i firkantede parenteser, hvor manualen har en token. Spillets mål
+  som `aspect-[360/150]` er fine.
+- Opdatér derefter sidens UI efter manualen: overskrifter, brødtekst, links, knapper, FAQ-skuffen, footeren og rammen
+  og pointvisningen omkring spillet. Hvor manualen har en komponent, så brug den. Hvor den ikke har, så byg ud fra
+  tokens; find ikke på nye farver eller størrelser.
+- Hvis manualen angiver en skrifttype eller et ikonsæt, så brug det. Spørg, før du tilføjer en skrifttype, der ikke er
+  gratis at bruge på nettet.
+- G-spilleren og logoerne forbliver, som de er.
+- Tjek selv det, AI'en laver, op mod Figma. Hver værdi i temaet skal komme fra en navngiven style i Figma, ikke fra en
+  værdi, værktøjet har gættet eller rundet af.
+- Opgave 3–7 bygger ny UI i det her design. Derfor kommer opgaven før dem.
 
-**Up to you:** where the game sits on the page, and a playful line that ties it in (e.g. "Siden er væk, men måske
+**Op til dig:** hvordan du arbejder med Claude og Figma: hvad du beder om, i hvilken rækkefølge, og hvad du gør i
+hånden.
+
+**Færdig når**
+
+- `grep -rn -- '-\[#' src` finder ingenting (ingen farver er hardcodet længere).
+- PR'en har før/efter-skærmbilleder på desktop og telefon og en tabel, der parrer hver token i temaet med dens style i
+  Figma.
+- PR-beskrivelsen har en kort note om arbejdsgangen: hvilke prompts der virkede, hvad AI'en tog fejl af, og hvad du
+  rettede i hånden. Noten er lige så vigtig som koden; vi bruger den i teamet.
+
+---
+
+## Opgave 3: Routing og en mock-404-side med spillet (1 dag)
+
+**Mål:** SPA'en får mere end én side, og en forkert URL viser en 404-side i Gul&Gratis-stil, hvor man kan spille
+spillet.
+
+**Besluttet**
+
+- Brug React Router (eller en router i samme størrelse). Den nuværende side bliver på `/`.
+- Alle ukendte URL'er viser 404-siden.
+- Siden ligger på `/guloggartis/` på GitHub Pages, så routeren bruger det som base path (Vite stiller det til rådighed
+  som `import.meta.env.BASE_URL`).
+- GitHub Pages kender ikke til routes på klientsiden. Åbner man
+  `https://khojgaardkroyer-stack.github.io/guloggartis/foo` direkte eller genindlæser den, får man GitHubs egen
+  404-side, medmindre vi leverer en `404.html`. Kopiér `dist/index.html` til `dist/404.html` som en del af
+  `npm run build`. Skift ikke til hash-URL'er (`/#/foo`).
+- 404-siden kopierer layoutet fra den rigtige på guloggratis.dk. Åbn en URL, der ikke findes der (fx
+  `https://www.guloggratis.dk/findes-ikke`), og match dens opbygning, overskrift, tekst og knapper. Behold den gule
+  baggrund og SPA'ens header og footer omkring den.
+- Spillet er med på 404-siden og kan spilles. Det er den samme komponent som på forsiden, ikke en kopi.
+- 404-siden har et link tilbage til `/`.
+
+**Op til dig:** hvor spillet står på siden, og en legende linje, der binder det sammen (fx "Siden er væk, men måske
 kan du nå at levere pakken?").
 
-**Done when**
+**Færdig når**
 
-- `/guloggartis/` shows the front page exactly as before.
-- `/guloggartis/findes-ikke` shows the 404 page, both when you navigate there in the app and when you open the URL
-  directly or refresh it on the deployed site.
-- The game on the 404 page plays and keeps the same high score as the front page (they share `localStorage`).
-- The browser tab title changes per page.
-
----
-
-## Task 4: The game turns 3D after 200 metres (1½–2 days)
-
-**Goal:** the game starts in 2D as it is today. After 200 metres the camera swings behind the G and the run continues
-in 3D, without stopping.
-
-**Decided**
-
-- Add a metre counter to the HUD: **1 point = 1 metre**. The switch happens at 200 m. Put the 200 in a named
-  constant so it's easy to tune.
-- The game rules from Task 1 don't change. The run stays the same "lane": same jumps, same obstacles and same
-  collisions. Only the drawing changes. Collisions in 3D must match what the 2D rules decide, or the game will feel
-  unfair.
-- Use Three.js, directly or through `@react-three/fiber`.
-- Load the 3D code only when it's needed (`import()` / `React.lazy`). Start loading it in the background once the
-  player is running, so the switch doesn't stall at 200 m. The front page's first load must not include it (check
-  the chunk sizes in `npm run build`).
-- The switch is an animated camera move of roughly 1–2 seconds. The game keeps running during it, or pauses briefly
-  and visibly, but never cuts abruptly.
-- If the browser can't do WebGL, or the visitor has turned on "reduce motion", the game stays in 2D the whole time.
-- Fullscreen, keyboard, touch and the win sequence (delivering the parcel to the parcel shop) still work in 3D.
-
-**Up to you:** how the 3D world looks. Simple low-poly boxes for parcels, a cone for the cone, and the G as a flat
-sprite or an extruded shape are all fine. Use the colours from the design manual (Task 2).
-
-**Done when**
-
-- A full run from 0 to `WIN_SCORE` works on desktop and on a phone, with the switch at 200 m.
-- It runs smoothly (no visible stutter) on a mid-range phone.
-- The front page's initial JavaScript is about the same size as before the task (say what it was before and after
-  in the PR).
+- `/guloggartis/` viser forsiden præcis som før.
+- `/guloggartis/findes-ikke` viser 404-siden, både når man navigerer dertil i appen, og når man åbner URL'en direkte
+  eller genindlæser den på den deployede side.
+- Spillet på 404-siden virker og deler highscore med forsiden (de deler `localStorage`).
+- Fanens titel i browseren skifter fra side til side.
 
 ---
 
-## Task 5: "Prøv det selv": a step-by-step trade walkthrough (1½–2 days)
+## Opgave 4: Spillet bliver 3D efter 200 meter (1½–2 dage)
 
-**Goal:** a gamified walkthrough where the visitor plays out a SikkerHandel trade, as either the buyer or the seller,
-from first bid to rating.
+**Mål:** spillet starter i 2D, som det er i dag. Efter 200 meter svinger kameraet om bag G'et, og løbet fortsætter i
+3D uden at stoppe.
 
-**Decided**
+**Besluttet**
 
-- Its own route, e.g. `/proev-det`, with a clear call to action from the front page.
-- The visitor first picks a role: **køber** or **sælger**.
-- The steps follow the real flow as described in `src/content.ts`. Don't invent steps or rules that the content
-  doesn't describe. The happy path:
-  1. **Bud:** the buyer bids on an item; the seller accepts.
-  2. **Betaling:** the buyer pays; the money goes to the secure trade account, not to the seller.
-  3. **Forsendelse:** the seller gets a shipping label and has 6 days to hand in the parcel.
-  4. **Levering:** the parcel arrives at the parcel shop closest to the buyer's registered address.
-  5. **Godkendelse:** the buyer has 12 hours after pickup to approve or reject. Doing nothing counts as approval.
-  6. **Udbetaling:** the money is paid out to the seller, typically the next bank day.
-  7. **Bedømmelse:** buyer and seller rate each other.
-- One branch: at step 5 the buyer can **reject** the item. Then the buyer buys a return label and sends the item back,
-  the seller can report problems, and if there are none, the buyer gets the money back.
-- As seller, the visitor's choices are the seller's (accept the bid, ship the parcel); the buyer's actions happen
-  automatically, and vice versa.
-- Show where the money is at every step (buyer → trade account → seller or back to the buyer). This is the core
-  message of SikkerHandel.
-- Model the flow as data (steps, choices and the next step for each choice) in one file, not as nested `if`s spread
-  across components. Test the flow (every path ends, and the reject branch returns the money to the buyer).
-- Everything is pretend. Nothing calls Gul&Gratis, and no real data is collected.
+- Tilføj en metertæller til pointvisningen: **1 point = 1 meter**. Skiftet sker ved 200 m. Læg de 200 i en navngiven
+  konstant, så den er nem at justere.
+- Spillets regler fra Opgave 1 ændrer sig ikke. Løbet foregår stadig på samme "bane": samme hop, samme forhindringer
+  og samme kollisioner. Kun tegningen ændrer sig. Kollisioner i 3D skal stemme med det, 2D-reglerne bestemmer, ellers
+  føles spillet uretfærdigt.
+- Brug Three.js, direkte eller gennem `@react-three/fiber`.
+- Indlæs først 3D-koden, når der er brug for den (`import()` / `React.lazy`). Begynd at hente den i baggrunden, når
+  spilleren løber, så skiftet ikke hakker ved 200 m. Forsidens første indlæsning må ikke indeholde den (tjek
+  chunk-størrelserne i `npm run build`).
+- Skiftet er en animeret kamerabevægelse på ca. 1–2 sekunder. Spillet kører videre imens eller holder en kort, synlig
+  pause, men klipper aldrig brat.
+- Hvis browseren ikke kan WebGL, eller den besøgende har slået "reducer bevægelse" til, bliver spillet i 2D hele
+  tiden.
+- Fuld skærm, tastatur, touch og afslutningen, når man vinder (pakken bliver leveret til pakkeshoppen), virker stadig
+  i 3D.
 
-**Up to you:** the layout and animations within the design manual, how "game-like" it feels (points, a progress bar,
-a timer for the 12 hours) and the copy. A little humour is welcome.
+**Op til dig:** hvordan 3D-verdenen ser ud. Simple low-poly-kasser til pakker, en kegle til keglen, og G'et som en
+flad sprite eller en ekstruderet form er alt sammen fint. Brug farverne fra designmanualen (Opgave 2).
 
-**Done when**
+**Færdig når**
 
-- Both roles can complete both the happy path and the reject path.
-- The visitor can restart, and can go back one step.
-- It works with keyboard only, and on a phone.
+- Et helt løb fra 0 til `WIN_SCORE` virker på desktop og telefon, med skiftet ved 200 m.
+- Det kører glat (ingen synlig hakken) på en mellemklassetelefon.
+- Forsidens første JavaScript-indlæsning er omtrent lige så stor som før opgaven (skriv størrelsen før og efter i
+  PR'en).
 
 ---
 
-## Task 6: Fee calculator (½ day)
+## Opgave 5: "Prøv det selv": en handel trin for trin (1½–2 dage)
 
-**Goal:** the visitor enters a price and sees what the buyer pays and what the seller receives.
+**Mål:** en gennemgang med spilelementer, hvor den besøgende spiller en SikkerHandel igennem som enten køber eller
+sælger, fra første bud til bedømmelse.
 
-**Decided**
+**Besluttet**
 
-- Each side's fee is `price × percentage / 100 + flat rate`, rounded to whole øre. The buyer and the seller each have
-  their own percentage and flat rate.
-- Rates (filled in by the product owner before you start):
+- Sin egen route, fx `/proev-det`, med en tydelig opfordring på forsiden.
+- Den besøgende vælger først en rolle: **køber** eller **sælger**.
+- Trinene følger det rigtige forløb, som det er beskrevet i `src/content.ts`. Find ikke på trin eller regler, som
+  teksten ikke beskriver. Det almindelige forløb:
+  1. **Bud:** køber byder på en vare; sælger accepterer.
+  2. **Betaling:** køber betaler; pengene går til den sikrede handelskonto, ikke til sælger.
+  3. **Forsendelse:** sælger får en pakkelabel og har 6 dage til at indlevere pakken.
+  4. **Levering:** pakken kommer til den pakkeshop, der ligger tættest på købers folkeregisteradresse.
+  5. **Godkendelse:** køber har 12 timer efter afhentning til at godkende eller afvise. Gør køber ingenting, tæller
+     det som en godkendelse.
+  6. **Udbetaling:** pengene bliver udbetalt til sælger, typisk første bankdag efter.
+  7. **Bedømmelse:** køber og sælger bedømmer hinanden.
+- Én forgrening: ved trin 5 kan køber **afvise** varen. Så køber køber en returlabel og sender varen tilbage, sælger
+  kan melde problemer, og er der ingen, får køber pengene tilbage.
+- Som sælger træffer den besøgende sælgers valg (acceptere buddet, sende pakken); købers handlinger sker af sig selv,
+  og omvendt.
+- Vis ved hvert trin, hvor pengene er (køber → handelskonto → sælger eller tilbage til køber). Det er kernen i
+  SikkerHandel.
+- Beskriv forløbet som data (trin, valg og næste trin for hvert valg) i én fil, ikke som indlejrede `if`'er spredt ud
+  over komponenterne. Test forløbet (hver vej når en afslutning, og afvisningen giver køber pengene tilbage).
+- Alt er på skrømt. Intet kalder Gul&Gratis, og der bliver ikke indsamlet rigtige data.
 
-  | | Percentage | Flat rate |
+**Op til dig:** layout og animationer inden for designmanualen, hvor meget det føles som et spil (point, en
+fremdriftsbjælke, en nedtælling for de 12 timer) og teksterne. Lidt humor er velkommen.
+
+**Færdig når**
+
+- Begge roller kan gennemføre både det almindelige forløb og afvisningen.
+- Den besøgende kan starte forfra og gå ét trin tilbage.
+- Det virker med kun tastatur og på en telefon.
+
+---
+
+## Opgave 6: Gebyrberegner (½ dag)
+
+**Mål:** den besøgende indtaster en pris og ser, hvad køber betaler, og hvad sælger får.
+
+**Besluttet**
+
+- Gebyret for hver part er `pris × procent / 100 + fast beløb`, rundet til hele øre. Køber og sælger har hver deres
+  procentsats og faste beløb.
+- Satser (udfyldes af produktejeren, før du starter):
+
+  | | Procent | Fast beløb |
   | --- | --- | --- |
-  | Buyer | _TBD_ | _TBD_ kr |
-  | Seller | _TBD_ | _TBD_ kr |
-  | Shipping (from) | | _TBD_ kr |
+  | Køber | _følger_ | _følger_ kr |
+  | Sælger | _følger_ | _følger_ kr |
+  | Fragt (fra) | | _følger_ kr |
 
-- Keep the rates in one constant so they're easy to update. Calculate in øre (integers), and format as kroner only
-  when displaying.
-- The result shows: item price, buyer's fee, shipping, **total the buyer pays**, seller's fee, and **what the seller
-  receives**.
-- Include a short note that the prices are an example and that the trade page on guloggratis.dk shows the exact
-  amount.
+- Hold satserne i én konstant, så de er nemme at opdatere. Regn i øre (heltal), og formatér først som kroner, når
+  beløbet vises.
+- Resultatet viser: varens pris, købers gebyr, fragt, **hvad køber betaler i alt**, sælgers gebyr og **hvad sælger
+  får udbetalt**.
+- Tilføj en kort note om, at priserne er et eksempel, og at handelssiden på guloggratis.dk viser det præcise beløb.
 
-**Done when**
+**Færdig når**
 
-- The calculation has tests, including rounding and a price of 0.
-- It handles empty input, letters and negative numbers without breaking.
-
----
-
-## Task 7: Spot the scam, a quiz (1 day)
-
-**Goal:** show why SikkerHandel exists. The visitor sees 5–6 made-up listings or chat messages and has to spot the
-warning signs.
-
-**Decided**
-
-- Examples of warning signs: "send me the money on MobilePay first", a link that leads outside Gul&Gratis, "my cousin
-  will pick it up", a price far too good to be true, pressure to decide quickly.
-- Mix in at least one message that is fine, so it's not just "click everything".
-- After each answer, explain in one or two sentences why, and how SikkerHandel protects you.
-- All names, items and messages are clearly made up. Don't use real users or screenshots from the site.
-
-**Done when**
-
-- A full round can be played, ending with a score and a link to the walkthrough (Task 5).
+- Beregningen har tests, også af afrunding og en pris på 0.
+- Den håndterer tomt felt, bogstaver og negative tal uden at gå i stykker.
 
 ---
 
-## Stretch (pick whatever you like)
+## Opgave 7: Spot svindlen, en quiz (1 dag)
 
-- **Accessibility and Lighthouse:** run Lighthouse on mobile and get every page to 90+ on Performance and
-  Accessibility. Check the contrast of grey text on yellow, and that every page works by keyboard.
-- **Share your score:** when you win or lose, create an image of the result and share it with the phone's share sheet
-  (`navigator.share`); fall back to downloading the image.
-- **English version:** a language switch (DA/EN). `src/content.ts` already holds the text in one place.
-- **Ready to drop into guloggratis.dk:** make the game one self-contained component that only needs React and
-  Tailwind, with no imports from the rest of this SPA, and write a short README section on how to embed it. This is
-  how it could end up on the real 404 page.
-- **End-to-end tests:** Playwright tests that every route loads, the 404 page shows the game, and the walkthrough can
-  be finished as buyer and as seller.
-- **Code style like the main Gul&Gratis repo:** add Prettier with tabs, no semicolons, single quotes and a 120
-  character line limit. Do this in its own PR, because the diff touches every file.
+**Mål:** vis, hvorfor SikkerHandel findes. Den besøgende ser 5–6 opdigtede annoncer eller chatbeskeder og skal finde
+advarselstegnene.
+
+**Besluttet**
+
+- Eksempler på advarselstegn: "send pengene på MobilePay først", et link, der fører væk fra Gul&Gratis, "min fætter
+  henter den", en pris, der er alt for god til at være sand, og pres for at beslutte sig hurtigt.
+- Bland mindst én besked ind, der er helt i orden, så det ikke bare handler om at klikke på alt.
+- Forklar efter hvert svar i en eller to sætninger hvorfor, og hvordan SikkerHandel beskytter dig.
+- Alle navne, varer og beskeder er tydeligt opdigtede. Brug ikke rigtige brugere eller skærmbilleder fra sitet.
+
+**Færdig når**
+
+- En hel runde kan spilles og slutter med en score og et link til gennemgangen (Opgave 5).
+
+---
+
+## Ekstraopgaver (vælg dem, du har lyst til)
+
+- **Tilgængelighed og Lighthouse:** kør Lighthouse på mobil, og få alle sider op på 90+ i Performance og
+  Accessibility. Tjek kontrasten på grå tekst på gul baggrund, og at alle sider kan bruges med tastatur.
+- **Del din score:** når man vinder eller taber, laves der et billede af resultatet, som kan deles via telefonens
+  delemenu (`navigator.share`); ellers kan billedet downloades.
+- **Engelsk version:** et sprogvalg (DA/EN). `src/content.ts` samler allerede teksten ét sted.
+- **Klar til guloggratis.dk:** gør spillet til én selvstændig komponent, der kun kræver React og Tailwind, uden
+  imports fra resten af SPA'en, og skriv et kort afsnit i README om, hvordan man indlejrer det. Sådan kan det ende på
+  den rigtige 404-side.
+- **End-to-end-tests:** Playwright-tests af, at alle routes indlæses, at 404-siden viser spillet, og at gennemgangen
+  kan gennemføres som køber og som sælger.
+- **Kodestil som i Gul&Gratis' hovedrepo:** tilføj Prettier med tabs, ingen semikoloner, enkelte anførselstegn og en
+  linjelængde på 120 tegn. Gør det i sin egen PR, fordi ændringen rører alle filer.
