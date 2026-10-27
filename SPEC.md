@@ -1,12 +1,14 @@
 # SikkerHandel SPA: næste skridt
 
-Det her er arbejdsplanen for resten af ugen. Opgaverne står i prioriteret rækkefølge: gør én færdig, før du starter
-på den næste, og lav én pull request pr. opgave mod `main`. Hvis du løber tør for tid, er det helt fint at stoppe
-efter Opgave 5. Opgave 6–7 og ekstraopgaverne er bonus.
+Det her er opgaverne for resten af ugen. Du vælger selv rækkefølgen og behøver ikke nå det hele. Den eneste faste
+afhængighed er, at Opgave 4 kræver Opgave 1. Lav én pull request pr. opgave mod `main`.
+
+**Forslag til rækkefølge:** tag dem i nummerrækkefølge og ekstraopgaverne til sidst. Opgave 0 er hurtig at komme i
+gang med. Opgave 2 tidligt betyder, at det, du bygger i de andre opgaver, er i det rigtige design fra start i stedet
+for at skulle laves om bagefter.
 
 Hver opgave har et **mål**, **hvad der er besluttet** (lav det ikke om uden at spørge), **hvad der er op til dig** og
-**færdig når** (de kriterier, vi gennemgår din PR ud fra). Tidsestimaterne er grove. Hvis en opgave tager mere end
-dobbelt så lang tid som estimeret, så stop og spørg.
+**færdig når** (de kriterier, vi gennemgår din PR ud fra). Sidder du fast, så spørg hellere tidligt end sent.
 
 ## Grundregler
 
@@ -15,12 +17,14 @@ dobbelt så lang tid som estimeret, så stop og spørg.
 - `npm run lint` og `npm run build` skal køre uden fejl på hver PR.
 - Siden skal virke på en telefon (375 px bred) og på desktop. Tjek begge, før du beder om review.
 - Tilføj ikke en afhængighed, hvis et par linjer kode kan klare det. Når du tilføjer en, så skriv hvorfor i PR'en.
-- Efter Opgave 2 bruger al ny UI tokens og komponenter fra designmanualen.
+- Opgave 1, 5 og 6 har tests. Den første af dem, du laver, sætter Vitest op (`npm run test`) og kører det i
+  deploy-workflowet sammen med lint.
+- Når Opgave 2 er lavet, bruger al ny UI tokens og komponenter fra designmanualen.
 - Hold siden hurtig. 3D-biblioteket (Opgave 4) må ikke gøre forsidens første indlæsning langsommere.
 
 ---
 
-## Opgave 0: Opvarmning og oprydning (½ time)
+## Opgave 0: Opvarmning og oprydning
 
 **Mål:** et rent repo og en deploy, der afviser kode med fejl.
 
@@ -36,7 +40,7 @@ dobbelt så lang tid som estimeret, så stop og spørg.
 
 ---
 
-## Opgave 1: Tests, og del spillets logik op fra tegningen (1 dag)
+## Opgave 1: Tests, og del spillets logik op fra tegningen
 
 **Mål:** spillets regler kan testes uden en browser, og tegningen kan skiftes ud senere. Opgave 4 bygger på det her.
 
@@ -45,7 +49,6 @@ forhindringer, kollisioner, point), tegningen på canvas og React-UI'en omkring 
 
 **Besluttet**
 
-- Tilføj Vitest (`npm run test`), og kør det i deploy-workflowet sammen med lint.
 - Flyt spillets regler over i ren TypeScript uden React og uden canvas, fx `src/game/engine.ts`. Én funktion rykker
   spillet ét tidsskridt frem, `step(state, dtSeconds, input) => state`, og resten er små hjælpefunktioner.
 - Canvas-tegningen bliver en funktion, der tager spillets tilstand og en canvas-kontekst og kun tegner.
@@ -63,7 +66,7 @@ forhindringer, kollisioner, point), tegningen på canvas og React-UI'en omkring 
 
 ---
 
-## Opgave 2: Følg Gul&Gratis' designmanual med Figma i Claude Code (1 dag)
+## Opgave 2: Følg Gul&Gratis' designmanual med Figma i Claude Code
 
 **Mål:** SPA'en ligner en del af guloggratis.dk i stedet for sin egen ting. Du lærer også at give et AI-værktøj et
 designsystem at arbejde ud fra, i stedet for at lade det gætte.
@@ -78,7 +81,7 @@ designsystem at arbejde ud fra, i stedet for at lade det gætte.
   `src/index.css`) og hedde det samme som styles i Figma. Derefter må ingen komponent bruge en farve i firkantede
   parenteser som `bg-[#F3C91D]`, eller en størrelse i firkantede parenteser, hvor manualen har en token. Spillets mål
   som `aspect-[360/150]` er fine.
-- Opdatér derefter sidens UI efter manualen: overskrifter, brødtekst, links, knapper, FAQ-skuffen, footeren og rammen
+- Opdatér derefter al UI, der findes i SPA'en på det tidspunkt, efter manualen: overskrifter, brødtekst, links, knapper, FAQ-skuffen, footeren og rammen
   og pointvisningen omkring spillet. Hvor manualen har en komponent, så brug den. Hvor den ikke har, så byg ud fra
   tokens; find ikke på nye farver eller størrelser.
 - Hvis manualen angiver en skrifttype eller et ikonsæt, så brug det. Spørg, før du tilføjer en skrifttype, der ikke er
@@ -86,7 +89,6 @@ designsystem at arbejde ud fra, i stedet for at lade det gætte.
 - G-spilleren og logoerne forbliver, som de er.
 - Tjek selv det, AI'en laver, op mod Figma. Hver værdi i temaet skal komme fra en navngiven style i Figma, ikke fra en
   værdi, værktøjet har gættet eller rundet af.
-- Opgave 3–7 bygger ny UI i det her design. Derfor kommer opgaven før dem.
 
 **Op til dig:** hvordan du arbejder med Claude og Figma: hvad du beder om, i hvilken rækkefølge, og hvad du gør i
 hånden.
@@ -101,7 +103,7 @@ hånden.
 
 ---
 
-## Opgave 3: Routing og en mock-404-side med spillet (1 dag)
+## Opgave 3: Routing og en mock-404-side med spillet
 
 **Mål:** SPA'en får mere end én side, og en forkert URL viser en 404-side i Gul&Gratis-stil, hvor man kan spille
 spillet.
@@ -127,7 +129,7 @@ kan du nå at levere pakken?").
 
 **Færdig når**
 
-- `/guloggartis/` viser forsiden præcis som før.
+- `/guloggartis/` viser forsiden som før.
 - `/guloggartis/findes-ikke` viser 404-siden, både når man navigerer dertil i appen, og når man åbner URL'en direkte
   eller genindlæser den på den deployede side.
 - Spillet på 404-siden virker og deler highscore med forsiden (de deler `localStorage`).
@@ -135,10 +137,12 @@ kan du nå at levere pakken?").
 
 ---
 
-## Opgave 4: Spillet bliver 3D efter 200 meter (1½–2 dage)
+## Opgave 4: Spillet bliver 3D efter 200 meter
 
 **Mål:** spillet starter i 2D, som det er i dag. Efter 200 meter svinger kameraet om bag G'et, og løbet fortsætter i
 3D uden at stoppe.
+
+**Kræver:** Opgave 1.
 
 **Besluttet**
 
@@ -170,14 +174,19 @@ flad sprite eller en ekstruderet form er alt sammen fint. Brug farverne fra desi
 
 ---
 
-## Opgave 5: "Prøv det selv": en handel trin for trin (1½–2 dage)
+## Opgave 5: "Prøv det selv": en handel trin for trin
 
 **Mål:** en gennemgang med spilelementer, hvor den besøgende spiller en SikkerHandel igennem som enten køber eller
 sælger, fra første bud til bedømmelse.
 
 **Besluttet**
 
-- Sin egen route, fx `/proev-det`, med en tydelig opfordring på forsiden.
+- Byg den som én selvstændig komponent, der kan stå inline på en side og lige så nemt på sin egen side. Den ved
+  ikke, hvor den er placeret: al tilstand ligger i komponenten, den ændrer ikke sidens titel eller URL, og den fylder
+  den bredde, den får.
+- Den står inline på forsiden, fx efter afsnittet "Sådan foregår en handel".
+- Når man skifter trin, må siden ikke hoppe: komponenten holder nogenlunde sin højde, og fokus flytter til det nye
+  trin uden at scrolle siden væk.
 - Den besøgende vælger først en rolle: **køber** eller **sælger**.
 - Trinene følger det rigtige forløb, som det er beskrevet i `src/content.ts`. Find ikke på trin eller regler, som
   teksten ikke beskriver. Det almindelige forløb:
@@ -204,13 +213,15 @@ fremdriftsbjælke, en nedtælling for de 12 timer) og teksterne. Lidt humor er v
 
 **Færdig når**
 
+- Den virker inline på forsiden. Er routing (Opgave 3) lavet, vises den også på `/proev-det` uden ændringer i
+  komponenten.
 - Begge roller kan gennemføre både det almindelige forløb og afvisningen.
 - Den besøgende kan starte forfra og gå ét trin tilbage.
 - Det virker med kun tastatur og på en telefon.
 
 ---
 
-## Opgave 6: Gebyrberegner (½ dag)
+## Opgave 6: Gebyrberegner
 
 **Mål:** den besøgende indtaster en pris og ser, hvad køber betaler, og hvad sælger får.
 
@@ -239,7 +250,7 @@ fremdriftsbjælke, en nedtælling for de 12 timer) og teksterne. Lidt humor er v
 
 ---
 
-## Opgave 7: Spot svindlen, en quiz (1 dag)
+## Opgave 7: Spot svindlen, en quiz
 
 **Mål:** vis, hvorfor SikkerHandel findes. Den besøgende ser 5–6 opdigtede annoncer eller chatbeskeder og skal finde
 advarselstegnene.
@@ -254,7 +265,8 @@ advarselstegnene.
 
 **Færdig når**
 
-- En hel runde kan spilles og slutter med en score og et link til gennemgangen (Opgave 5).
+- En hel runde kan spilles og slutter med en score og, hvis Opgave 5 er lavet, en opfordring til at prøve
+  gennemgangen.
 
 ---
 
