@@ -105,7 +105,7 @@ function drawShop(ctx: CanvasRenderingContext2D, x: number) {
 export function drawGame(
   ctx: CanvasRenderingContext2D,
   state: GameState,
-  playerImg: HTMLImageElement | null,
+  playerImg: CanvasImageSource | null,
 ) {
   ctx.clearRect(0, 0, WIDTH, HEIGHT)
 

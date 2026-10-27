@@ -2,7 +2,17 @@ import { useEffect, useRef, useState } from 'react'
 import { MdFullscreen, MdFullscreenExit } from 'react-icons/md'
 import playerSrc from '../assets/g-player.svg'
 import { drawGame } from '../game/draw'
-import { HEIGHT, WIDTH, WIN_SCORE, newGame, startGame, step, type Status } from '../game/engine'
+import {
+  HEIGHT,
+  PLAYER_H,
+  PLAYER_W,
+  WIDTH,
+  WIN_SCORE,
+  newGame,
+  startGame,
+  step,
+  type Status,
+} from '../game/engine'
 
 const HIGH_SCORE_KEY = 'ggame-highscore'
 
@@ -35,6 +45,8 @@ function GGame() {
   // Set by input, applied (and cleared) by the next step
   const pendingJump = useRef(false)
   const playerImg = useRef<HTMLImageElement | null>(null)
+  // The player SVG rasterised once at the current canvas scale
+  const playerSprite = useRef<{ scale: number; canvas: HTMLCanvasElement } | null>(null)
 
   useEffect(() => {
     const img = new Image()
@@ -45,6 +57,21 @@ function GGame() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Browsers differ in how they rasterise an SVG passed to drawImage under a scale transform,
+  // so draw it once onto an offscreen canvas at the exact pixel size and reuse that bitmap.
+  function playerSpriteFor(scale: number) {
+    const img = playerImg.current
+    if (!img) return null
+    if (playerSprite.current?.scale !== scale) {
+      const sprite = document.createElement('canvas')
+      sprite.width = Math.round(PLAYER_W * scale)
+      sprite.height = Math.round(PLAYER_H * scale)
+      sprite.getContext('2d')?.drawImage(img, 0, 0, sprite.width, sprite.height)
+      playerSprite.current = { scale, canvas: sprite }
+    }
+    return playerSprite.current.canvas
+  }
 
   function draw() {
     const canvas = canvasRef.current
@@ -58,7 +85,7 @@ function GGame() {
       canvas.height = Math.round(HEIGHT * scale)
     }
     ctx.setTransform(scale, 0, 0, scale, 0, 0)
-    drawGame(ctx, game.current, playerImg.current)
+    drawGame(ctx, game.current, playerSpriteFor(scale))
   }
 
   function recordHighScore(points: number) {
