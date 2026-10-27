@@ -1,7 +1,8 @@
 # SikkerHandel SPA: næste skridt
 
 Det her er opgaverne for resten af ugen. Du vælger selv rækkefølgen og behøver ikke nå det hele. De eneste faste
-afhængigheder er, at Opgave 4 kræver Opgave 1, og Opgave 8 kræver Opgave 3. Lav én pull request pr. opgave mod `main`.
+afhængigheder er, at Opgave 4 kræver Opgave 1, og Opgave 8 og 9 kræver Opgave 3. Lav én pull request pr. opgave mod
+`main`.
 
 **Forslag til rækkefølge:** tag dem i nummerrækkefølge og ekstraopgaverne til sidst. Opgave 0 er hurtig at komme i
 gang med. Opgave 2 tidligt betyder, at det, du bygger i de andre opgaver, er i det rigtige design fra start i stedet
@@ -341,6 +342,37 @@ tredje), G'ets størrelse og teksten ved siden af. Brug tokens fra designmanuale
 - Et løb, der bliver lukket midt i, gemmer en ny highscore og starter forfra næste gang.
 - Med "reducer bevægelse" slået til er der ingen animation.
 - Det virker på en telefon (375 px) og på desktop.
+
+---
+
+## Opgave 9: Easter egg i logoet
+
+**Status:** Ikke startet
+
+**Mål:** trykker den besøgende tre gange hurtigt på Gul&Gratis-logoet øverst til højre, skifter sidens baggrund til et
+hemmeligt billede.
+
+**Kræver:** Opgave 3.
+
+**Besluttet**
+
+- Logoet øverst til højre (i det fælles layout fra Opgave 3) er ikke et link til guloggratis.dk længere.
+- Tre tryk på logoet inden for ca. 1 sekund slår easter egg'et til. Langsommere tryk tæller ikke.
+- Det virker på alle sider, fordi logoet ligger i layoutet.
+- Billedet (_følger_) erstatter den gule baggrund og GG-vandmærket på hele siden, dækker skærmen og står stille,
+  når man scroller. Læg det i `src/assets/`.
+- Det bliver ved, til siden bliver genindlæst. Intet bliver gemt.
+- Teksten på siden må gerne være svær at læse oven på billedet. Det er et easter egg.
+
+**Op til dig:** om logoet bliver en knap eller noget andet, og om skiftet sker med det samme eller med en lille
+overgang.
+
+**Færdig når**
+
+- Tre hurtige tryk på logoet skifter baggrunden til billedet, både på forsiden og på 404-siden.
+- Et eller to tryk, eller tre langsomme, gør ingenting, og logoet fører ikke væk fra siden.
+- Baggrunden er tilbage til gul efter en genindlæsning.
+- Det virker med touch på en telefon (375 px) og med mus på desktop.
 
 ---
 
