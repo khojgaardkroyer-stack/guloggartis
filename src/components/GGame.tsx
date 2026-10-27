@@ -1,8 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import { MdFullscreen, MdFullscreenExit } from 'react-icons/md'
-import playerSrc from '../assets/g-player.png'
+import playerSrc from '../assets/g-player.svg'
 import { drawGame } from '../game/draw'
-import { HEIGHT, WIDTH, WIN_SCORE, newGame, startGame, step, type Status } from '../game/engine'
+import {
+  HEIGHT,
+  PLAYER_H,
+  PLAYER_W,
+  WIDTH,
+  WIN_SCORE,
+  newGame,
+  startGame,
+  step,
+  type Status,
+} from '../game/engine'
 
 const HIGH_SCORE_KEY = 'ggame-highscore'
 
@@ -35,16 +45,45 @@ function GGame() {
   // Set by input, applied (and cleared) by the next step
   const pendingJump = useRef(false)
   const playerImg = useRef<HTMLImageElement | null>(null)
+  // The player SVG rasterised once at the current canvas scale
+  const playerSprite = useRef<{ scale: number; canvas: HTMLCanvasElement } | null>(null)
 
   useEffect(() => {
+    let cancelled = false
     const img = new Image()
     img.src = playerSrc
-    img.onload = () => {
+    const ready = () => {
+      if (cancelled) return
       playerImg.current = img
+      playerSprite.current = null
       draw()
+    }
+    // Wait for decode() before the sprite is rasterised: WebKit can draw an SVG blank straight
+    // from onload, and the cached sprite would then stay blank. Fall back to onload if decode fails.
+    img.decode().then(ready, () => {
+      if (img.complete && img.naturalWidth) ready()
+      else img.addEventListener('load', ready, { once: true })
+    })
+    return () => {
+      cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Browsers differ in how they rasterise an SVG passed to drawImage under a scale transform,
+  // so draw it once onto an offscreen canvas at the exact pixel size and reuse that bitmap.
+  function playerSpriteFor(scale: number) {
+    const img = playerImg.current
+    if (!img) return null
+    if (playerSprite.current?.scale !== scale) {
+      const sprite = document.createElement('canvas')
+      sprite.width = Math.round(PLAYER_W * scale)
+      sprite.height = Math.round(PLAYER_H * scale)
+      sprite.getContext('2d')?.drawImage(img, 0, 0, sprite.width, sprite.height)
+      playerSprite.current = { scale, canvas: sprite }
+    }
+    return playerSprite.current.canvas
+  }
 
   function draw() {
     const canvas = canvasRef.current
@@ -58,7 +97,7 @@ function GGame() {
       canvas.height = Math.round(HEIGHT * scale)
     }
     ctx.setTransform(scale, 0, 0, scale, 0, 0)
-    drawGame(ctx, game.current, playerImg.current)
+    drawGame(ctx, game.current, playerSpriteFor(scale))
   }
 
   function recordHighScore(points: number) {

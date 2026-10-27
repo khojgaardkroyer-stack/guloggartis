@@ -3,8 +3,8 @@
 export const WIDTH = 360
 export const HEIGHT = 150
 export const GROUND_Y = 128
-export const PLAYER_W = 30
-export const PLAYER_H = 35
+export const PLAYER_W = 32
+export const PLAYER_H = 32
 export const PLAYER_X = 24
 export const GRAVITY = 2200
 export const JUMP_VELOCITY = -680
