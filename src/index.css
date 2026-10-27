@@ -15,7 +15,7 @@
   --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
 
   /* Colours: UI */
-  --color-brand-yellow: #feef7b; /* color/brand/yellow (→ color/foundation/palette/yellow/500) */
+  --color-page-background: #e8bb3e; /* NOT from Figma: user's choice, awaiting product owner OK (see Open points) */
   --color-text-primary: #2e2e2e; /* color/text/primary (→ color/foundation/neutral/900) */
   --color-text-secondary: #777777; /* color/text/secondary (→ color/foundation/neutral/600) */
   --color-text-link: #0060e6; /* color/text/link (→ color/foundation/palette/blue/900) */
@@ -32,7 +32,8 @@
   --color-border-divider: #d0d4d7; /* color/border/divider (→ color/foundation/neutral/300) */
   --color-border-focus: #2e2e2e; /* color/border/focus (→ color/foundation/neutral/900) */
 
-  /* Colours: game canvas (src/game/draw.ts) */
+  /* Colours: game canvas (src/game/draw.ts). The canvas also uses --color-page-background,
+     --color-surface-white and --color-text-green. */
   --color-brand-gray-dark: #2e2e2e; /* color/brand/gray-dark (→ color/foundation/neutral/900) */
   --color-brand-blue-light: #d7f1f6; /* color/brand/blue-light (→ color/foundation/palette/blue/100) */
   --color-foundation-neutral-550: #969696; /* color/foundation/neutral/550 */

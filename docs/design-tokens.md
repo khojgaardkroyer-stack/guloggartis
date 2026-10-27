@@ -20,7 +20,7 @@ The SPA's Tailwind theme (`@theme` in `src/index.css`) comes from Gul&Gratis' de
 
 | Tailwind token | Value | Figma variable | Used for |
 | --- | --- | --- | --- |
-| `--color-brand-yellow` | `#feef7b` | `color/brand/yellow` (→ `color/foundation/palette/yellow/500`) | Page background; the shop on the game canvas |
+| `--color-page-background` | `#e8bb3e` | **Not from Figma.** The user's choice at the token check; awaiting the product owner's OK. Nearest Figma token: `color/foundation/palette/yellow/700` `#e8b53e` | Page background; the shop wall and door knob on the game canvas |
 | `--color-text-primary` | `#2e2e2e` | `color/text/primary` (→ `color/foundation/neutral/900`) | Headings and body text everywhere |
 | `--color-text-secondary` | `#777777` | `color/text/secondary` (→ `color/foundation/neutral/600`) | Game score and help text; footer links (as in the Figma footer) |
 | `--color-text-link` | `#0060e6` | `color/text/link` (→ `color/foundation/palette/blue/900`) | Inline link "GulogGratis.dk" in the intro |
@@ -51,7 +51,7 @@ The SPA's Tailwind theme (`@theme` in `src/index.css`) comes from Gul&Gratis' de
 | `--color-foundation-palette-rust-700` | `#a34d14` | `color/foundation/palette/rust/700` | Traffic cone base |
 | `--color-foundation-palette-red-700` | `#e8262a` | `color/foundation/palette/red/700` | Envelope seal |
 
-The canvas also uses `--color-brand-yellow` (shop, door knob), `--color-surface-white` and `--color-text-green` from
+The canvas also uses `--color-page-background` (shop wall, door knob), `--color-surface-white` and `--color-text-green` from
 the UI table.
 
 ### Typography
@@ -105,7 +105,8 @@ token carries the line height of the Figma style at that size.
 
 ## Nearest-token substitutions
 
-Where the SPA uses a value the manual has no token for, it gets the nearest token. These need the user's approval.
+Where the SPA uses a value the manual has no token for, it gets the nearest token. The user approved these at the
+token check, except the yellow background, where the user chose a value of their own (see below).
 Colours were compared by RGB distance against every colour variable in the file; the runner-up is listed when it was
 close.
 
@@ -113,7 +114,7 @@ close.
 
 | Old value | Token | Figma variable | Note |
 | --- | --- | --- | --- |
-| `bg-[#F3C91D]` (page) and `#F3C91D` (canvas shop and door knob) | `--color-brand-yellow` `#feef7b` | `color/brand/yellow` | The manual has a brand yellow, so the plan says to use it. It is clearly paler than today's yellow. By RGB distance the nearest tokens to `#F3C91D` are `color/foundation/palette/orange/500` `#ffad1e` (30.5), `color/foundation/palette/yellow/700` `#e8b53e` (40.1) and `color/foundation/palette/yellow/600` `#faca48` (43.6); `#feef7b` is further away. **User decides.** |
+| `bg-[#F3C91D]` (page) and `#F3C91D` (canvas shop and door knob) | `--color-page-background` `#e8bb3e` | **Not from Figma** | Decided at the token check: the user chose exactly `#e8bb3e`. It is not a Figma variable; the nearest is `color/foundation/palette/yellow/700` `#e8b53e`. SPEC requires every theme value to come from a named Figma style, so this needs the product owner's OK. If the answer is no, `--color-page-background` switches to `#e8b53e` (`color/foundation/palette/yellow/700`). The manual's brand yellow `color/brand/yellow` `#feef7b` was proposed at the token check and not chosen; it is no longer in the theme. |
 
 ### UI colours (Tailwind palette classes → manual)
 
@@ -154,8 +155,8 @@ close.
 | `#c2410c` | Traffic cone base | `--color-foundation-palette-rust-700` `#a34d14` | `color/foundation/palette/rust/700` | 34.2 (`rust/500` 36.0) |
 | `#fff` | Cone stripe, envelope, sign text | `--color-surface-white` `#ffffff` | `color/surface/white` | 0 |
 | `#2d2d2d` | Ground line, outlines, sign, door | `--color-brand-gray-dark` `#2e2e2e` | `color/brand/gray-dark` | 1.7 |
-| `#ef4444` | Envelope seal | `--color-foundation-palette-red-700` `#e8262a` | `color/foundation/palette/red/700` | 40.3. **Not the nearest:** `orange/700` `#ff5f37` is 34.0, but it is also the cone's colour and is orange, not red. `red/500` `#ff421e` is 41.3. **User decides.** |
-| `#F3C91D` | Shop wall, door knob | `--color-brand-yellow` `#feef7b` | `color/brand/yellow` | See "Yellow background". |
+| `#ef4444` | Envelope seal | `--color-foundation-palette-red-700` `#e8262a` | `color/foundation/palette/red/700` | 40.3. **Not the nearest:** `orange/700` `#ff5f37` is 34.0, but it is also the cone's colour and is orange, not red. `red/500` `#ff421e` is 41.3. Approved by the user at the token check. |
+| `#F3C91D` | Shop wall, door knob | `--color-page-background` `#e8bb3e` | Not from Figma | See "Yellow background". |
 | `#e0f2fe` | Shop window | `--color-brand-blue-light` `#d7f1f6` | `color/brand/blue-light` | 12.1 (`blue/50` `#ecf9fb` 14.2) |
 | `#9ca3af` | Ground dashes | `--color-foundation-neutral-550` `#969696` | `color/foundation/neutral/550` | 28.8 |
 | `#15803d` | Delivery tick mark | `--color-text-green` `#089855` | `color/text/green` (→ `color/foundation/palette/green/800`) | 36.3 |
