@@ -187,10 +187,12 @@ function GGame({ id, onClose }: GGameProps) {
     setScore(0)
     setStatus('ready')
     if (document.fullscreenElement) {
-      document.exitFullscreen().then(
-        () => onClose?.(),
-        () => onClose?.(),
-      )
+      // Don't wait for fullscreenchange: the fold-up must not start while the section is still fixed
+      const done = () => {
+        setIsFull(false)
+        onClose?.()
+      }
+      document.exitFullscreen().then(done, done)
       return
     }
     if (isFull) setIsFull(false)
@@ -298,8 +300,6 @@ function GGame({ id, onClose }: GGameProps) {
               handleInput()
             }}
             onKeyDown={(e) => {
-              // Holding Enter or space (eg. after opening the game) must not start a run
-              if (e.repeat) return
               if (e.key === ' ' || e.key === 'ArrowUp') {
                 e.preventDefault()
                 handleInput()
