@@ -309,7 +309,7 @@ advarselstegnene.
 
 ## Opgave 8: Spillet folder sig ud fra G'et
 
-**Status:** Ikke startet
+**Status:** I gang
 
 **Mål:** spillet gemmer sig som et lille G, spillerens eget logo, og folder sig ud, når den besøgende trykker på det.
 Både på forsiden og på 404-siden.
