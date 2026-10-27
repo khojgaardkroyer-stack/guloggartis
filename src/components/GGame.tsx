@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { PiCornersIn, PiCornersOut } from 'react-icons/pi'
+import { PiCornersIn, PiCornersOut, PiX } from 'react-icons/pi'
 import playerSrc from '../assets/g-player.svg'
 import { drawGame } from '../game/draw'
 import { readPalette, type GamePalette } from '../game/palette'
@@ -33,7 +33,13 @@ function saveHighScore(score: number) {
   }
 }
 
-function GGame() {
+type GGameProps = {
+  id?: string
+  // When set, a close button is shown next to the fullscreen button
+  onClose?: () => void
+}
+
+function GGame({ id, onClose }: GGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const sectionRef = useRef<HTMLElement>(null)
   const [isFull, setIsFull] = useState(false)
@@ -174,6 +180,23 @@ function GGame() {
     }
   }
 
+  // Stop the run (saving the high score as on a loss), leave fullscreen first, then hand over to onClose
+  function close() {
+    if (status === 'running') recordHighScore(game.current.score)
+    game.current = newGame()
+    setScore(0)
+    setStatus('ready')
+    if (document.fullscreenElement) {
+      document.exitFullscreen().then(
+        () => onClose?.(),
+        () => onClose?.(),
+      )
+      return
+    }
+    if (isFull) setIsFull(false)
+    onClose?.()
+  }
+
   useEffect(() => {
     const onChange = () => setIsFull(document.fullscreenElement === sectionRef.current)
     document.addEventListener('fullscreenchange', onChange)
@@ -215,6 +238,7 @@ function GGame() {
   return (
     <section
       ref={sectionRef}
+      id={id}
       aria-label="Spil: Hop over forhindringerne"
       className={
         isFull
@@ -251,6 +275,17 @@ function GGame() {
                 <PiCornersOut aria-hidden="true" className="size-4" />
               )}
             </button>
+            {onClose && (
+              <button
+                type="button"
+                onClick={close}
+                aria-label="Luk spillet"
+                title="Luk spillet"
+                className="flex items-center justify-center rounded-control-pill bg-button-secondary-background p-2 text-icon-default transition hover:bg-state-hover-neutral"
+              >
+                <PiX aria-hidden="true" className="size-4" />
+              </button>
+            )}
           </div>
         </div>
         <div className="relative">
@@ -263,6 +298,8 @@ function GGame() {
               handleInput()
             }}
             onKeyDown={(e) => {
+              // Holding Enter or space (eg. after opening the game) must not start a run
+              if (e.repeat) return
               if (e.key === ' ' || e.key === 'ArrowUp') {
                 e.preventDefault()
                 handleInput()
