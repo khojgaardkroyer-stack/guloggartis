@@ -35,6 +35,14 @@ work from instead of letting it guess; the PR's workflow note is as important as
 - **Yellow:** the page background today is `#F3C91D`. The manual's palette has `color/foundation/palette/yellow/500`
   `#feef7b`, and may have a brand yellow. Use the manual's brand yellow if there is one, otherwise the nearest yellow
   token, and call out the change in the token table. The user decides at the token check.
+- **Yellow, decided at the token check:** the page background and the canvas shop and door knob use exactly
+  `#e8bb3e`. This is the user's choice; it is not a Figma token (the nearest is `color/foundation/palette/yellow/700`
+  `#e8b53e`). Add it to `@theme` as `--color-page-background: #e8bb3e` with the comment
+  `/* NOT from Figma: user's choice, awaiting product owner OK (see Open points) */`. Use it for those three places
+  only. `--color-brand-yellow` stays in the theme only if something else uses it. In `docs/design-tokens.md`, mark the
+  row "Not from Figma".
+- **Token table approved:** all other rows and substitutions in `docs/design-tokens.md` as of commit `cf8e9df`
+  (link blue, light grey overlay, grey footer, `card-shadow` for all shadows, golden cardboard, red seal `red/700`).
 - **Token table:** `docs/design-tokens.md` holds a table with one row per token: Tailwind token, value, exact Figma
   variable or style name, and where it's used. The PR copies or links it. Reason: the user's choice; it stays as a
   reference for later tasks.
@@ -100,6 +108,11 @@ Stage 2: UI (only after the user has approved the token table)
 - The PR has the workflow note → user, from `.claude/plans/opgave-2-workflow.md`.
 - The page works at 375 px and on desktop → user.
 - `bun run lint`, `bun run test`, `bun run build` pass.
+
+## Open points
+- **Background yellow `#e8bb3e` is not a Figma token.** SPEC's Besluttet says every theme value must come from a named
+  Figma style. The user chose this value anyway; it needs the product owner's OK. The PR must say so explicitly. If
+  the product owner says no, switch `--color-page-background` to `color/foundation/palette/yellow/700` `#e8b53e`.
 
 ## Out of scope
 - New pages, routes or features.
