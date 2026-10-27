@@ -33,17 +33,24 @@ Hver opgave har et **mål**, **hvad der er besluttet** (lav det ikke om uden at 
 - Fjern `numpy-2.5.4-…whl` (16 MB) og `potracer-0.0.4-….whl` fra repoet, og tilføj `*.whl` til `.gitignore`.
 - Kør `npm run lint` før `npm run build` i `.github/workflows/deploy.yml`.
 - Spilleren i minispillet bruger det forkerte logo. Skift `src/assets/g-player.png` ud med det smalle logo,
-  `src/assets/gg-narrow.svg` (to G'er side om side), som vi har lagt ind fra hovedrepoet. Slet `g-player.png`.
-- Brug SVG-filen, som den er; tegn eller trace den ikke om. Farven må gerne ændres, så den står tydeligt på
-  baggrunden.
-- Logoet er dobbelt så bredt, som det er højt, så spillerens kasse får samme forhold i stedet for de nuværende 30 × 35.
-  Kollisionerne følger kassen, så spil et par runder og justér, så spillet stadig føles fair og kan vindes.
+  `src/assets/gg-narrow.svg` (to G'er side om side), som vi har lagt ind fra hovedrepoet, eller med kun det ene G fra
+  det. Slet `g-player.png`.
+- Brug formen fra SVG-filen, som den er; tegn eller trace den ikke om. Til ét G kan du beskære `viewBox` til
+  `0 0 30 30` og sætte `width` til `30`. Farven må gerne ændres, så logoet står tydeligt på baggrunden.
+- Spillerens kasse får samme forhold som det logo, du vælger (2:1 med to G'er, kvadratisk med ét), i stedet for de
+  nuværende 30 × 35. Kollisionerne følger kassen, så spil et par runder og justér, så spillet stadig føles fair og kan
+  vindes.
+
+**Op til dig:** om spilleren er begge G'er eller kun ét. Vi foreslår også at skifte baggrundens vandmærke
+(`src/assets/gg-logo.svg`, en hjemmelavet tracing af logoet) ud med `gg-narrow.svg`, så hele siden bruger det rigtige
+logo.
 
 **Færdig når**
 
 - Ingen af `.whl`-filerne er tracket længere (`git ls-files` viser dem ikke).
 - Et push med en lint-fejl får workflowet til at fejle, og siden bliver ikke deployet.
-- Spilleren er det smalle GG-logo, skarpt både i normal visning og i fuld skærm, i Chrome, Safari og Firefox.
+- Spilleren er det smalle GG-logo eller ét G fra det, skarpt både i normal visning og i fuld skærm, i Chrome,
+  Safari og Firefox.
 - Et helt spil kan stadig vindes, og høje konvolutter flyver stadig over en spiller, der står på jorden.
 
 ---
