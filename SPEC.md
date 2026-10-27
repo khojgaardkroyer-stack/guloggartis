@@ -65,7 +65,7 @@ logo.
 
 ## Opgave 1: Tests, og del spillets logik op fra tegningen
 
-**Status:** I gang
+**Status:** Færdig
 
 **Mål:** spillets regler kan testes uden en browser, og tegningen kan skiftes ud senere. Opgave 4 bygger på det her.
 
