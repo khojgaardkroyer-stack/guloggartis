@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { type Ref, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import playerSrc from '../assets/g-player.svg'
 import GGame from './GGame'
 
@@ -19,29 +19,54 @@ function clearStyles(card: HTMLElement) {
   card.style.opacity = ''
 }
 
+// Transform that maps the card's box onto the G's box (with transform-origin: top left)
+function foldTransform(logo: DOMRect, card: DOMRect) {
+  return `translate(${logo.left - card.left}px, ${logo.top - card.top}px) scale(${logo.width / card.width}, ${logo.height / card.height})`
+}
+
+// The G and its text, shared by the button and the hidden placeholder that keeps the G's spot while the game is open
+function GLabel({ logoRef, hover }: { logoRef: Ref<HTMLImageElement>; hover?: boolean }) {
+  return (
+    <>
+      <img
+        ref={logoRef}
+        src={playerSrc}
+        alt=""
+        className={
+          hover
+            ? 'size-16 transition group-hover:scale-110 motion-reduce:transition-none motion-reduce:group-hover:scale-100'
+            : 'size-16'
+        }
+      />
+      Hvorfor er der mon et G?
+    </>
+  )
+}
+
+const LABEL_CLASSES = 'flex items-center gap-3 text-left text-lg font-semibold text-text-primary'
+
 // The game hides behind the player's G and unfolds from it (FLIP: the card starts at the G's box and grows)
 function FoldableGame() {
   const gameId = useId()
   const [phase, setPhase] = useState<Phase>('closed')
   const buttonRef = useRef<HTMLButtonElement>(null)
   const logoRef = useRef<HTMLImageElement>(null)
+  // The G inside the placeholder: where the G button will be once the game folds up
+  const placeholderLogoRef = useRef<HTMLImageElement>(null)
   // The G's box, measured just before the switch to the card
   const logoRect = useRef<DOMRect | null>(null)
-  // Transform that maps the card onto the G, kept for folding back up
-  const foldedTransform = useRef<string | null>(null)
   const focusButton = useRef(false)
   const focusCanvas = useRef(false)
 
   function open() {
     focusCanvas.current = true
     logoRect.current = prefersReducedMotion() ? null : (logoRef.current?.getBoundingClientRect() ?? null)
-    foldedTransform.current = null
     setPhase(logoRect.current ? 'opening' : 'open')
   }
 
   function close() {
     focusButton.current = true
-    setPhase(foldedTransform.current && !prefersReducedMotion() ? 'closing' : 'closed')
+    setPhase(prefersReducedMotion() ? 'closed' : 'closing')
   }
 
   useLayoutEffect(() => {
@@ -55,13 +80,9 @@ function FoldableGame() {
     }
 
     if (phase === 'opening' && logoRect.current) {
-      const from = logoRect.current
-      const to = card.getBoundingClientRect()
-      const transform = `translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${from.width / to.width}, ${from.height / to.height})`
-      foldedTransform.current = transform
       card.style.transition = 'none'
       card.style.transformOrigin = 'top left'
-      card.style.transform = transform
+      card.style.transform = foldTransform(logoRect.current, card.getBoundingClientRect())
       card.style.opacity = '0'
       // Commit the start state so the browser transitions from it
       void card.offsetWidth
@@ -80,12 +101,16 @@ function FoldableGame() {
       }
     }
 
-    if (phase === 'closing' && foldedTransform.current) {
-      const transform = foldedTransform.current
+    if (phase === 'closing') {
+      // Measure now, not at open: the layout may have changed since (resize, rotation, crossing sm)
+      const logo = placeholderLogoRef.current?.getBoundingClientRect()
+      // No input while folding up, so a tap or key can't start a run that is thrown away
+      card.inert = true
       card.style.transition = 'none'
       card.style.transformOrigin = 'top left'
       card.style.transform = 'none'
       card.style.opacity = '1'
+      const transform = logo ? foldTransform(logo, card.getBoundingClientRect()) : 'none'
       void card.offsetWidth
 
       let timer = 0
@@ -99,6 +124,7 @@ function FoldableGame() {
         cancelAnimationFrame(frame)
         clearTimeout(timer)
         clearStyles(card)
+        card.inert = false
       }
     }
   }, [phase, gameId])
@@ -118,20 +144,23 @@ function FoldableGame() {
         onClick={open}
         aria-expanded={false}
         aria-controls={gameId}
-        className="group flex items-center gap-3 rounded-xl text-left text-lg font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-border-focus"
+        className={`group rounded-xl focus-visible:outline-2 focus-visible:outline-border-focus ${LABEL_CLASSES}`}
       >
-        <img
-          ref={logoRef}
-          src={playerSrc}
-          alt=""
-          className="size-16 transition group-hover:scale-110 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
-        />
-        Hvorfor er der mon et G?
+        <GLabel logoRef={logoRef} hover />
       </button>
     )
   }
 
-  return <GGame id={gameId} onClose={close} />
+  return (
+    <>
+      {/* Out of flow, so the layout is unchanged; as an absolute flex child it still sits where the
+          container's alignment would put the G button */}
+      <div aria-hidden="true" className={`pointer-events-none invisible absolute ${LABEL_CLASSES}`}>
+        <GLabel logoRef={placeholderLogoRef} />
+      </div>
+      <GGame id={gameId} onClose={close} />
+    </>
+  )
 }
 
 export default FoldableGame
