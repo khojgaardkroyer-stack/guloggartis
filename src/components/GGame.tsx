@@ -49,11 +49,23 @@ function GGame() {
   const playerSprite = useRef<{ scale: number; canvas: HTMLCanvasElement } | null>(null)
 
   useEffect(() => {
+    let cancelled = false
     const img = new Image()
     img.src = playerSrc
-    img.onload = () => {
+    const ready = () => {
+      if (cancelled) return
       playerImg.current = img
+      playerSprite.current = null
       draw()
+    }
+    // Wait for decode() before the sprite is rasterised: WebKit can draw an SVG blank straight
+    // from onload, and the cached sprite would then stay blank. Fall back to onload if decode fails.
+    img.decode().then(ready, () => {
+      if (img.complete && img.naturalWidth) ready()
+      else img.addEventListener('load', ready, { once: true })
+    })
+    return () => {
+      cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
