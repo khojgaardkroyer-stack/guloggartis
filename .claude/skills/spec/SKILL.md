@@ -176,9 +176,13 @@ Phase 4 asks nothing; the Phase 3 approval covers it.
 1. Set the task's status line in `SPEC.md` to `**Status:** Færdig` on the
    branch, and commit it alone as `Finish opgave <n>`.
 2. `git push -u origin opgave-<n>`.
-3. Open the PR against `main`. With `gh` available:
-   `gh pr create --base main --title "Opgave <n>: <English title>" --body ...`.
-   Without it, give the user the compare URL
+3. Open the PR against `main` with the GitHub MCP server's
+   `create_pull_request` tool (server `github` in `.mcp.json`; load it with
+   ToolSearch if it is deferred). Take `owner` and `repo` from
+   `git remote get-url origin`, and pass `head: opgave-<n>`, `base: main`,
+   `title: Opgave <n>: <English title>` and the body below. Don't use `gh`.
+   If the tool is missing or fails (eg. no `GITHUB_PERSONAL_ACCESS_TOKEN`),
+   give the user the compare URL
    (`https://github.com/<owner>/<repo>/compare/main...opgave-<n>`) and the
    body to paste. The body has:
    - **What:** a few lines on what changed.
