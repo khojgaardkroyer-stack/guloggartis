@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { MdFullscreen, MdFullscreenExit } from 'react-icons/md'
-import playerSrc from '../assets/g-player.png'
+import playerSrc from '../assets/g-player.svg'
 import { drawGame } from '../game/draw'
 import { HEIGHT, WIDTH, WIN_SCORE, newGame, startGame, step, type Status } from '../game/engine'
 

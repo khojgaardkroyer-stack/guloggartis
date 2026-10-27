@@ -131,7 +131,7 @@ export function drawGame(
   }
 
   if (state.parcel === 'carried') {
-    drawParcel(ctx, state.px + 7, state.y - 13, 16, 14)
+    drawParcel(ctx, state.px + (PLAYER_W - 16) / 2, state.y - 13, 16, 14)
   } else if (state.parcel === 'delivered' && state.shopX !== null) {
     const doorX = state.shopX + SHOP_DOOR_X
     drawParcel(ctx, doorX + 4, GROUND_Y - 14, 16, 14)
