@@ -93,7 +93,7 @@ forhindringer, kollisioner, point), tegningen på canvas og React-UI'en omkring 
 
 ## Opgave 2: Følg Gul&Gratis' designmanual med Figma i Claude Code
 
-**Status:** I gang
+**Status:** Færdig
 
 **Mål:** SPA'en ligner en del af guloggratis.dk i stedet for sin egen ting. Du lærer også at give et AI-værktøj et
 designsystem at arbejde ud fra, i stedet for at lade det gætte.
