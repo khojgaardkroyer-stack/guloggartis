@@ -1,6 +1,6 @@
 import { PiStorefront } from 'react-icons/pi'
 import FaqDrawer from '../components/FaqDrawer'
-import GGame from '../components/GGame'
+import FoldableGame from '../components/FoldableGame'
 import TextSection from '../components/TextSection'
 import { faqs, GUL_OG_GRATIS_URL, sections } from '../content'
 
@@ -41,7 +41,7 @@ function HomePage() {
         </div>
       </div>
       <div className="relative mt-12 flex justify-center sm:justify-end">
-        <GGame />
+        <FoldableGame />
       </div>
       <FaqDrawer title="Ofte stillede spørgsmål" faqs={faqs} />
     </>

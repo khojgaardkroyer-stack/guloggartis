@@ -1,6 +1,6 @@
 import { PiArrowLeft } from 'react-icons/pi'
 import { Link } from 'react-router'
-import GGame from '../components/GGame'
+import FoldableGame from '../components/FoldableGame'
 import { GUL_OG_GRATIS_URL } from '../content'
 
 function NotFoundPage() {
@@ -16,7 +16,7 @@ function NotFoundPage() {
         </header>
 
         <div className="flex justify-center">
-          <GGame />
+          <FoldableGame />
         </div>
 
         <p className="text-center text-lg">

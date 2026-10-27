@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { PiCornersIn, PiCornersOut } from 'react-icons/pi'
+import { PiCornersIn, PiCornersOut, PiX } from 'react-icons/pi'
 import playerSrc from '../assets/g-player.svg'
 import { drawGame } from '../game/draw'
 import { readPalette, type GamePalette } from '../game/palette'
@@ -33,7 +33,13 @@ function saveHighScore(score: number) {
   }
 }
 
-function GGame() {
+type GGameProps = {
+  id?: string
+  // When set, a close button is shown next to the fullscreen button
+  onClose?: () => void
+}
+
+function GGame({ id, onClose }: GGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const sectionRef = useRef<HTMLElement>(null)
   const [isFull, setIsFull] = useState(false)
@@ -174,6 +180,25 @@ function GGame() {
     }
   }
 
+  // Stop the run (saving the high score as on a loss), leave fullscreen first, then hand over to onClose
+  function close() {
+    if (status === 'running') recordHighScore(game.current.score)
+    game.current = newGame()
+    setScore(0)
+    setStatus('ready')
+    if (document.fullscreenElement) {
+      // Don't wait for fullscreenchange: the fold-up must not start while the section is still fixed
+      const done = () => {
+        setIsFull(false)
+        onClose?.()
+      }
+      document.exitFullscreen().then(done, done)
+      return
+    }
+    if (isFull) setIsFull(false)
+    onClose?.()
+  }
+
   useEffect(() => {
     const onChange = () => setIsFull(document.fullscreenElement === sectionRef.current)
     document.addEventListener('fullscreenchange', onChange)
@@ -215,6 +240,7 @@ function GGame() {
   return (
     <section
       ref={sectionRef}
+      id={id}
       aria-label="Spil: Hop over forhindringerne"
       className={
         isFull
@@ -232,10 +258,18 @@ function GGame() {
             Hop over forhindringerne
           </h2>
           <div className="ml-auto flex shrink-0 items-center gap-1-5">
+            {/* DM Sans has no tabular digits, so the score's width changes with every point. An invisible
+                widest-case copy ("0" is the widest digit) fixes the box's width, so the header never
+                re-wraps mid-run and the card can't change height */}
             <p
-              className={`whitespace-nowrap text-text-secondary tabular-nums ${isFull ? 'text-base sm:text-lg' : 'text-xs'}`}
+              className={`grid whitespace-nowrap text-text-secondary tabular-nums ${isFull ? 'text-base sm:text-lg' : 'text-xs'}`}
             >
-              HI {String(highScore).padStart(5, '0')} {String(score).padStart(5, '0')}
+              <span aria-hidden="true" className="invisible col-start-1 row-start-1">
+                HI 00000 00000
+              </span>
+              <span className="col-start-1 row-start-1 text-right">
+                HI {String(highScore).padStart(5, '0')} {String(score).padStart(5, '0')}
+              </span>
             </p>
             {/* Icon button as in the manual's modal close button: 16px icon, spacing/2 padding */}
             <button
@@ -251,6 +285,17 @@ function GGame() {
                 <PiCornersOut aria-hidden="true" className="size-4" />
               )}
             </button>
+            {onClose && (
+              <button
+                type="button"
+                onClick={close}
+                aria-label="Luk spillet"
+                title="Luk spillet"
+                className="flex items-center justify-center rounded-control-pill bg-button-secondary-background p-2 text-icon-default transition hover:bg-state-hover-neutral"
+              >
+                <PiX aria-hidden="true" className="size-4" />
+              </button>
+            )}
           </div>
         </div>
         <div className="relative">
