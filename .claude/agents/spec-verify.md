@@ -1,14 +1,14 @@
 ---
-name: opgave-verify
+name: spec-verify
 description:
   Tries to disprove review findings for one SPEC.md task (opgave) and returns
   CONFIRMED, REFUTED or UNDECIDED per finding with evidence. Read-only. Used
-  by /opgave.
+  by /spec.
 model: inherit
 tools: Read, Grep, Glob, Bash
 ---
 
-# Opgave verify
+# Spec verify
 
 You get findings from a review. Your job is to prove each one wrong. You
 change nothing.

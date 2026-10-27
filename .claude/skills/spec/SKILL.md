@@ -1,5 +1,5 @@
 ---
-name: opgave
+name: spec
 description:
   Work with the tasks (opgaver) in SPEC.md. With a task number, solves that
   task from start to pull request - marks it in progress, grills the user on
@@ -7,12 +7,12 @@ description:
   subagent, then a review pass and a verify pass, loops until the user
   approves, marks it done and opens a PR. With a feature description instead,
   even a vague one, interviews the user and adds it to SPEC.md as a new task
-  in the spec's format. Use when the user types /opgave, asks to work on a
+  in the spec's format. Use when the user types /spec, asks to work on a
   task from the spec, or asks to add a task to it.
 argument-hint: <task number, eg. 3> | <description of a new task>
 ---
 
-# /opgave: solve a task from SPEC.md, or add one
+# /spec: solve a task from SPEC.md, or add one
 
 Talk to the user in the language they write in. Text visitors see on the
 site, and SPEC.md itself, are always Danish.
@@ -144,9 +144,9 @@ gate between implementing and reviewing.
 
 ## Phase 3: Review (fresh subagents)
 
-1. Spawn the `opgave-review` agent with: the repo's absolute path, the range
+1. Spawn the `spec-review` agent with: the repo's absolute path, the range
    `main...HEAD`, the plan path, and the opgave number.
-2. If it returns blockers, spawn the `opgave-verify` agent with the same
+2. If it returns blockers, spawn the `spec-verify` agent with the same
    path, range and plan path, and the blockers numbered. A reviewer asked to
    find problems always finds some; verification throws out the wrong ones.
    No blockers → no verification.
@@ -207,7 +207,7 @@ Phase 4 asks nothing; the Phase 3 approval covers it.
 
 You turn a feature idea, often vague, into a new task in `SPEC.md` that
 reads like the ones already there. The reader is whoever solves it later,
-with `/opgave <n>` or by hand. **Besluttet** holds only what the user
+with `/spec <n>` or by hand. **Besluttet** holds only what the user
 actually decides here; everything else goes to **Op til dig**, where the
 solve flow's interview picks it up. You write no code and create no branch.
 
@@ -317,7 +317,7 @@ approved.
    `main`. If the push is rejected, pull and try once more; if it still
    fails, tell the user and leave the commit local.
 4. Report: the task number and title, what else in SPEC.md changed, any
-   `_følger_` placeholders still to fill, and that `/opgave <n>` starts it.
+   `_følger_` placeholders still to fill, and that `/spec <n>` starts it.
    Then stop; don't start solving it.
 
 ## Rules for adding

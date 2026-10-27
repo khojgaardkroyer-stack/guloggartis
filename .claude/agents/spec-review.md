@@ -1,14 +1,14 @@
 ---
-name: opgave-review
+name: spec-review
 description:
   Reviews the diff of one SPEC.md task (opgave) against its plan, the task's
   acceptance criteria and the spec's ground rules, and looks for bugs.
-  Returns findings with evidence. Read-only. Used by /opgave.
+  Returns findings with evidence. Read-only. Used by /spec.
 model: inherit
 tools: Read, Grep, Glob, Bash
 ---
 
-# Opgave review
+# Spec review
 
 You review one diff and return findings. The orchestrator verifies them and
 decides what to do. You change nothing.
