@@ -1,0 +1,168 @@
+// Game rules for the jump game: plain TypeScript, no React and no canvas.
+
+export const WIDTH = 360
+export const HEIGHT = 150
+export const GROUND_Y = 128
+export const PLAYER_W = 30
+export const PLAYER_H = 35
+export const PLAYER_X = 24
+export const GRAVITY = 2200
+export const JUMP_VELOCITY = -680
+export const START_SPEED = 260
+export const SPEED_GAIN = 8 // px/s added per second
+export const MAX_SPEED = 650
+export const WIN_SCORE = 2000
+
+export const SHOP_W = 120
+export const SHOP_H = 78
+export const SHOP_STOP_X = WIDTH - SHOP_W - 16
+export const SHOP_DOOR_X = 18
+export const SHOP_DOOR_W = 26
+export const WALK_SPEED = 110
+
+export type Status = 'ready' | 'running' | 'delivering' | 'over' | 'won'
+export type ObstacleKind = 'parcel' | 'stack' | 'row' | 'cone' | 'envelope'
+// lift = distance from the ground to the obstacle's bottom edge
+export type Obstacle = { kind: ObstacleKind; x: number; w: number; h: number; lift: number }
+export type ObstacleTemplate = Omit<Obstacle, 'x'>
+export type ParcelState = 'none' | 'carried' | 'delivered'
+export type GameInput = { jump: boolean }
+export type Rng = () => number
+
+export type GameState = {
+  status: Status
+  score: number
+  px: number
+  y: number
+  vy: number
+  speed: number
+  distance: number
+  nextObstacleIn: number
+  obstacles: Obstacle[]
+  shopX: number | null
+  parcel: ParcelState
+  celebrateIn: number
+}
+
+// New obstacle types unlock as the score climbs
+export const OBSTACLES: { minScore: number; make: () => ObstacleTemplate }[] = [
+  { minScore: 0, make: () => ({ kind: 'parcel', w: 18, h: 18, lift: 0 }) },
+  { minScore: 0, make: () => ({ kind: 'parcel', w: 26, h: 26, lift: 0 }) },
+  { minScore: 50, make: () => ({ kind: 'cone', w: 16, h: 24, lift: 0 }) },
+  { minScore: 100, make: () => ({ kind: 'stack', w: 20, h: 38, lift: 0 }) },
+  { minScore: 150, make: () => ({ kind: 'row', w: 54, h: 18, lift: 0 }) },
+  // Low envelopes must be jumped; high ones fly over you if you stay on the ground
+  { minScore: 200, make: () => ({ kind: 'envelope', w: 26, h: 16, lift: 12 }) },
+  { minScore: 200, make: () => ({ kind: 'envelope', w: 26, h: 16, lift: 44 }) },
+]
+
+export function randomObstacle(score: number, rng: Rng = Math.random): ObstacleTemplate {
+  const available = OBSTACLES.filter((o) => score >= o.minScore)
+  return available[Math.floor(rng() * available.length)].make()
+}
+
+export function newGame(): GameState {
+  return {
+    status: 'ready',
+    score: 0,
+    px: PLAYER_X,
+    y: GROUND_Y - PLAYER_H,
+    vy: 0,
+    speed: START_SPEED,
+    distance: 0,
+    nextObstacleIn: 0.6,
+    obstacles: [],
+    shopX: null,
+    parcel: 'none',
+    celebrateIn: 0,
+  }
+}
+
+export function startGame(): GameState {
+  return { ...newGame(), status: 'running' }
+}
+
+export function isOnGround(state: GameState): boolean {
+  return state.y >= GROUND_Y - PLAYER_H - 0.5
+}
+
+// Slightly forgiving hitbox
+export function collides(state: GameState): boolean {
+  const pad = 5
+  return state.obstacles.some((o) => {
+    const top = GROUND_Y - o.lift - o.h
+    const bottom = GROUND_Y - o.lift
+    const inset = o.kind === 'cone' ? 3 : 0
+    return (
+      state.px + pad < o.x + o.w - inset &&
+      state.px + PLAYER_W - pad > o.x + inset &&
+      state.y + PLAYER_H - pad > top &&
+      state.y + pad < bottom
+    )
+  })
+}
+
+/** Advances the game by one time step. Returns a new state; never mutates `state`. */
+export function step(state: GameState, dt: number, input: GameInput, rng: Rng = Math.random): GameState {
+  if (state.status !== 'running' && state.status !== 'delivering') return state
+
+  const g: GameState = { ...state }
+  if (input.jump && g.status === 'running' && isOnGround(g)) g.vy = JUMP_VELOCITY
+
+  const delivering = g.shopX !== null
+
+  g.vy += GRAVITY * dt
+  g.y = Math.min(g.y + g.vy * dt, GROUND_Y - PLAYER_H)
+  if (g.y === GROUND_Y - PLAYER_H) g.vy = 0
+
+  if (g.shopX === null) {
+    g.speed = Math.min(g.speed + SPEED_GAIN * dt, MAX_SPEED)
+  } else {
+    // Brake so the shop rolls to a stop at its spot
+    const remaining = g.shopX - SHOP_STOP_X
+    g.speed = remaining > 0 ? Math.max(Math.min(g.speed, remaining * 3), 60) : 0
+  }
+  const move =
+    g.shopX === null ? g.speed * dt : Math.min(g.speed * dt, Math.max(g.shopX - SHOP_STOP_X, 0))
+  g.distance += move
+  g.obstacles = state.obstacles.map((o) => ({ ...o, x: o.x - move })).filter((o) => o.x + o.w > 0)
+  if (g.shopX !== null) g.shopX -= move
+
+  if (!delivering) {
+    const points = Math.min(Math.floor(g.distance / 20), WIN_SCORE)
+    g.score = points
+
+    if (points >= WIN_SCORE) {
+      // Reached the goal: clear the road ahead and bring in the parcel shop
+      g.obstacles = g.obstacles.filter((o) => o.x + o.w < g.px)
+      g.shopX = WIDTH + 10
+      g.parcel = 'carried'
+      g.status = 'delivering'
+    } else {
+      g.nextObstacleIn -= dt
+      if (g.nextObstacleIn <= 0) {
+        const o: Obstacle = { x: WIDTH, ...randomObstacle(points, rng) }
+        g.obstacles = [...g.obstacles, o]
+        // Always leave enough room to land before the next obstacle
+        g.nextObstacleIn = 0.75 + (o.w + 40) / g.speed + rng() * 0.9
+      }
+
+      if (collides(g)) g.status = 'over'
+    }
+  } else if (g.shopX !== null && g.shopX <= SHOP_STOP_X && g.vy === 0) {
+    // Shop has arrived: walk to the door and hand over the parcel
+    if (g.parcel === 'carried') {
+      g.px += WALK_SPEED * dt
+      if (g.px + PLAYER_W >= g.shopX + SHOP_DOOR_X) {
+        g.px = g.shopX + SHOP_DOOR_X - PLAYER_W
+        g.parcel = 'delivered'
+        g.celebrateIn = 0.6
+      }
+    } else if (g.parcel === 'delivered') {
+      g.celebrateIn -= dt
+      if (g.celebrateIn <= 0) g.status = 'won'
+    }
+  }
+
+  return g
+}

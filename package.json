@@ -7,6 +7,7 @@
     "dev": "bun --bun vite",
     "build": "tsc -b && bun --bun vite build",
     "lint": "oxlint",
+    "test": "vitest run",
     "preview": "bun --bun vite preview"
   },
   "dependencies": {
@@ -23,6 +24,7 @@
     "oxlint": "^1.88.0",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.3",
-    "vite": "^8.3.4"
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5"
   }
 }
