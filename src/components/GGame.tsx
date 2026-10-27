@@ -258,10 +258,18 @@ function GGame({ id, onClose }: GGameProps) {
             Hop over forhindringerne
           </h2>
           <div className="ml-auto flex shrink-0 items-center gap-1-5">
+            {/* DM Sans has no tabular digits, so the score's width changes with every point. An invisible
+                widest-case copy ("0" is the widest digit) fixes the box's width, so the header never
+                re-wraps mid-run and the card can't change height */}
             <p
-              className={`whitespace-nowrap text-text-secondary tabular-nums ${isFull ? 'text-base sm:text-lg' : 'text-xs'}`}
+              className={`grid whitespace-nowrap text-text-secondary tabular-nums ${isFull ? 'text-base sm:text-lg' : 'text-xs'}`}
             >
-              HI {String(highScore).padStart(5, '0')} {String(score).padStart(5, '0')}
+              <span aria-hidden="true" className="invisible col-start-1 row-start-1">
+                HI 00000 00000
+              </span>
+              <span className="col-start-1 row-start-1 text-right">
+                HI {String(highScore).padStart(5, '0')} {String(score).padStart(5, '0')}
+              </span>
             </p>
             {/* Icon button as in the manual's modal close button: 16px icon, spacing/2 padding */}
             <button
