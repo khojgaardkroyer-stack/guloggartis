@@ -1,7 +1,7 @@
 # SikkerHandel SPA: næste skridt
 
-Det her er opgaverne for resten af ugen. Du vælger selv rækkefølgen og behøver ikke nå det hele. Den eneste faste
-afhængighed er, at Opgave 4 kræver Opgave 1. Lav én pull request pr. opgave mod `main`.
+Det her er opgaverne for resten af ugen. Du vælger selv rækkefølgen og behøver ikke nå det hele. De eneste faste
+afhængigheder er, at Opgave 4 kræver Opgave 1, og Opgave 8 kræver Opgave 3. Lav én pull request pr. opgave mod `main`.
 
 **Forslag til rækkefølge:** tag dem i nummerrækkefølge og ekstraopgaverne til sidst. Opgave 0 er hurtig at komme i
 gang med. Opgave 2 tidligt betyder, at det, du bygger i de andre opgaver, er i det rigtige design fra start i stedet
@@ -304,6 +304,43 @@ advarselstegnene.
 
 - En hel runde kan spilles og slutter med en score og, hvis Opgave 5 er lavet, en opfordring til at prøve
   gennemgangen.
+
+---
+
+## Opgave 8: Spillet folder sig ud fra G'et
+
+**Status:** Ikke startet
+
+**Mål:** spillet gemmer sig som et lille G, spillerens eget logo, og folder sig ud, når den besøgende trykker på det.
+Både på forsiden og på 404-siden.
+
+**Kræver:** Opgave 3.
+
+**Besluttet**
+
+- På spillets plads står kun et lille G, det samme logo som spilleren (`src/assets/g-player.svg`), med en kort
+  tekst ved siden af, der fortæller, at man kan trykke på det. Spillet er skjult, indtil man trykker.
+- Det virker ens på forsiden og på 404-siden, fordi det er den samme komponent begge steder.
+- Et tryk på G'et (mus, touch, Enter eller mellemrum) folder spillet ud med en animation på ca. 0,3–0,6 sekunder.
+  Spillet står derefter på "Tryk for at starte" som i dag; trykket, der åbnede det, bliver ikke til et hop.
+- Har den besøgende slået "reducer bevægelse" til, skifter det med det samme uden animation.
+- Det udfoldede spil har en luk-knap ved siden af fuld skærm-knappen, der folder det sammen til G'et igen. Lukker man
+  midt i et løb, stopper løbet. Highscoren bliver gemt som ved et tab, og næste gang står spillet på
+  "Tryk for at starte".
+- Siden husker ikke, om spillet var åbent. Hver side starter med G'et.
+- Spillets regler (`src/game/`) ændrer sig ikke. Fuld skærm, tastatur og touch virker som før, når spillet er åbent.
+
+**Op til dig:** hvordan udfoldningen ser ud (G'et vokser til kortet, kortet glider ud under G'et eller noget helt
+tredje), G'ets størrelse og teksten ved siden af. Brug tokens fra designmanualen.
+
+**Færdig når**
+
+- Forsiden og `/findes-ikke` viser G'et med teksten i stedet for spillet, og et tryk på G'et folder spillet ud.
+- Det kan åbnes og lukkes med kun tastatur. Fokus flytter til spillet, når det åbner, og tilbage til G'et, når det
+  lukker.
+- Et løb, der bliver lukket midt i, gemmer en ny highscore og starter forfra næste gang.
+- Med "reducer bevægelse" slået til er der ingen animation.
+- Det virker på en telefon (375 px) og på desktop.
 
 ---
 
