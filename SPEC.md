@@ -1,7 +1,7 @@
 # SikkerHandel SPA: next steps
 
 This is the work plan for the rest of the week. The tasks are in priority order: finish one before you start the next,
-and open one pull request per task against `main`. If you run out of time, stopping after Task 4 is fine. Tasks 5–6
+and open one pull request per task against `main`. If you run out of time, stopping after Task 5 is fine. Tasks 6–7
 and the stretch list are bonus work.
 
 Each task has a **goal**, **what is decided** (don't change these without asking), **what is up to you**, and
@@ -15,7 +15,8 @@ estimate, stop and ask.
 - `npm run lint` and `npm run build` pass on every PR.
 - The page must work on a phone (375 px wide) as well as on desktop. Check both before you ask for review.
 - Don't add a dependency when a few lines of code do the job. When you do add one, say why in the PR.
-- Keep the page fast. The 3D library (Task 3) must not slow down the first load of the front page.
+- After Task 2, all new UI uses the tokens and components from the design manual.
+- Keep the page fast. The 3D library (Task 4) must not slow down the first load of the front page.
 
 ---
 
@@ -37,7 +38,7 @@ estimate, stop and ask.
 
 ## Task 1: Tests, and split the game's logic from its drawing (1 day)
 
-**Goal:** the game's rules can be tested without a browser, and the drawing can be swapped out later. Task 3 depends
+**Goal:** the game's rules can be tested without a browser, and the drawing can be swapped out later. Task 4 depends
 on this.
 
 `src/components/GGame.tsx` currently mixes three things in one component: the game rules (gravity, jumping, spawning
@@ -63,7 +64,42 @@ obstacles, collisions, score), the canvas drawing, and the React UI around it.
 
 ---
 
-## Task 2: Routing and a mock 404 page with the game (1 day)
+## Task 2: Match the Gul&Gratis design manual, with Figma in Claude Code (1 day)
+
+**Goal:** the SPA looks like part of guloggratis.dk instead of its own thing. You'll also learn to give an AI tool a
+design system to work from instead of letting it guess.
+
+**Decided**
+
+- The source of truth is the Gul&Gratis design manual in Figma: _link TBD_. Ask for access if you can't open it.
+- Connect Claude Code to Figma's MCP server: `claude mcp add --transport http figma https://mcp.figma.com/mcp`, then
+  run `/mcp` in Claude Code and log in with your Figma account. Figma limits MCP use on view-only and free seats, so
+  ask if you run into a limit rather than working around it.
+- Do the design tokens first: colours, typography, spacing, corner radius and shadows. They go in the Tailwind theme
+  (`@theme` in `src/index.css`), named after the styles in Figma. After that, no component uses a bracket colour such
+  as `bg-[#F3C91D]`, or a bracket size where the manual has a token. Game geometry such as `aspect-[360/150]` is fine.
+- Then update the UI on the page to the manual: headings, body text, links, buttons, the FAQ drawer, the footer, and
+  the frame and score display around the game. Where the manual has a component, use it. Where it doesn't, build from
+  the tokens; don't invent new colours or sizes.
+- If the manual specifies a font or icon set, use it. Ask before adding a font that isn't free to use on the web.
+- The G player and the logos stay as they are.
+- Check what the AI produces against Figma yourself. Every value in the theme must come from a named Figma style, not
+  from a value the tool guessed or rounded.
+- Tasks 3–7 build new UI in this design. That's why this task comes before them.
+
+**Up to you:** how you work with Claude and Figma: what you ask it, in what order, and what you do by hand.
+
+**Done when**
+
+- `grep -rn -- '-\[#' src` finds nothing (no colour is hard-coded any more).
+- The PR has before/after screenshots on desktop and on a phone, and a table matching each theme token to its Figma
+  style.
+- The PR description has a short note on the workflow: which prompts worked, what the AI got wrong, and what you
+  fixed by hand. This note is as important as the code; we'll use it in the team.
+
+---
+
+## Task 3: Routing and a mock 404 page with the game (1 day)
 
 **Goal:** the SPA gets more than one page, and a wrong URL shows a Gul&Gratis-style 404 page where you can play the
 game.
@@ -96,7 +132,7 @@ kan du nå at levere pakken?").
 
 ---
 
-## Task 3: The game turns 3D after 200 metres (1½–2 days)
+## Task 4: The game turns 3D after 200 metres (1½–2 days)
 
 **Goal:** the game starts in 2D as it is today. After 200 metres the camera swings behind the G and the run continues
 in 3D, without stopping.
@@ -118,7 +154,7 @@ in 3D, without stopping.
 - Fullscreen, keyboard, touch and the win sequence (delivering the parcel to the parcel shop) still work in 3D.
 
 **Up to you:** how the 3D world looks. Simple low-poly boxes for parcels, a cone for the cone, and the G as a flat
-sprite or an extruded shape are all fine. It should look like Gul&Gratis: yellow, playful, clean.
+sprite or an extruded shape are all fine. Use the colours from the design manual (Task 2).
 
 **Done when**
 
@@ -129,7 +165,7 @@ sprite or an extruded shape are all fine. It should look like Gul&Gratis: yellow
 
 ---
 
-## Task 4: "Prøv det selv": a step-by-step trade walkthrough (1½–2 days)
+## Task 5: "Prøv det selv": a step-by-step trade walkthrough (1½–2 days)
 
 **Goal:** a gamified walkthrough where the visitor plays out a SikkerHandel trade, as either the buyer or the seller,
 from first bid to rating.
@@ -157,8 +193,8 @@ from first bid to rating.
   across components. Test the flow (every path ends, and the reject branch returns the money to the buyer).
 - Everything is pretend. Nothing calls Gul&Gratis, and no real data is collected.
 
-**Up to you:** the visual style, animations, how "game-like" it feels (points, a progress bar, a timer for the
-12 hours) and the copy. A little humour is welcome.
+**Up to you:** the layout and animations within the design manual, how "game-like" it feels (points, a progress bar,
+a timer for the 12 hours) and the copy. A little humour is welcome.
 
 **Done when**
 
@@ -168,7 +204,7 @@ from first bid to rating.
 
 ---
 
-## Task 5: Fee calculator (½ day)
+## Task 6: Fee calculator (½ day)
 
 **Goal:** the visitor enters a price and sees what the buyer pays and what the seller receives.
 
@@ -198,7 +234,7 @@ from first bid to rating.
 
 ---
 
-## Task 6: Spot the scam, a quiz (1 day)
+## Task 7: Spot the scam, a quiz (1 day)
 
 **Goal:** show why SikkerHandel exists. The visitor sees 5–6 made-up listings or chat messages and has to spot the
 warning signs.
@@ -213,7 +249,7 @@ warning signs.
 
 **Done when**
 
-- A full round can be played, ending with a score and a link to the walkthrough (Task 4).
+- A full round can be played, ending with a score and a link to the walkthrough (Task 5).
 
 ---
 
@@ -230,5 +266,4 @@ warning signs.
 - **End-to-end tests:** Playwright tests that every route loads, the 404 page shows the game, and the walkthrough can
   be finished as buyer and as seller.
 - **Code style like the main Gul&Gratis repo:** add Prettier with tabs, no semicolons, single quotes and a 120
-  character line limit, and replace the bracket colours (`bg-[#F3C91D]`) with named colours in the Tailwind theme.
-  Do this in its own PR, because the diff touches every file.
+  character line limit. Do this in its own PR, because the diff touches every file.
