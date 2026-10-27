@@ -1,3 +1,4 @@
+import { PiStorefront } from 'react-icons/pi'
 import ggLogo from './assets/gg-logo.svg'
 import logo from './assets/gul-og-gratis-logo.png'
 import FaqDrawer from './components/FaqDrawer'
@@ -11,7 +12,7 @@ const GUL_OG_GRATIS_URL = 'https://www.guloggratis.dk/'
 function App() {
   return (
     <>
-      <main className="relative min-h-screen bg-[#F3C91D] px-4 pt-16 pb-24 text-gray-900 sm:py-20">
+      <main className="relative min-h-screen bg-page-background px-4 pt-16 pb-24 text-text-primary sm:py-20">
         <div
           aria-hidden="true"
           className="pointer-events-none fixed inset-0 flex items-center justify-center overflow-hidden"
@@ -24,15 +25,15 @@ function App() {
         <div className="relative mx-auto max-w-2xl space-y-8">
           <header className="space-y-4 text-center">
             <h1 className="text-4xl font-bold sm:text-5xl">Hvad er SikkerHandel?</h1>
-            <p className="text-lg text-gray-800">
+            <p className="text-lg">
               SikkerHandel på{' '}
-              <a href={GUL_OG_GRATIS_URL} className="font-semibold text-gray-900 underline">
+              <a href={GUL_OG_GRATIS_URL} className="font-semibold text-text-link underline">
                 GulogGratis.dk
               </a>{' '}
               er en tryg og nem løsning, der sikrer, at både køber og sælger får en sikker handel, når
               I handler genbrug online.
             </p>
-            <p className="text-lg text-gray-800">
+            <p className="text-lg">
               Når køber betaler, står pengene på en sikret handelskonto, indtil varen er modtaget og
               godkendt. Først derefter bliver de udbetalt til sælger. Køber har 12 timer efter
               afhentning i pakkeshoppen til at tjekke varen, og er den ikke som beskrevet, kan den
@@ -47,9 +48,9 @@ function App() {
           <div className="flex flex-wrap justify-center gap-3">
             <a
               href={GUL_OG_GRATIS_URL}
-              className="flex items-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-gray-900 shadow-lg transition hover:bg-gray-100"
+              className="flex items-center gap-2 rounded-control-pill bg-button-tertiary-background px-5 py-2-5 text-lg font-semibold shadow-card-shadow transition hover:bg-state-hover-neutral"
             >
-              <span aria-hidden="true">🏪</span> Kom i gang
+              <PiStorefront aria-hidden="true" className="size-8 text-icon-default" /> Kom i gang
             </a>
           </div>
         </div>

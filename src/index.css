@@ -1,5 +1,96 @@
 @import 'tailwindcss';
 
-@theme {
+/*
+ * Design tokens from Gul&Gratis' design manual in Figma ("Gul&Gratis – Design System",
+ * fileKey TlehhRhTUyA8APHgZ7VGs6). Each token is named after its Figma variable path with "/"
+ * replaced by "-", where Tailwind's namespace supplies the first segment. The comment on each
+ * token is the exact Figma variable or style it is copied from. Sizes are Figma's px values
+ * converted to rem at 16px (exact, not rounded). See docs/design-tokens.md for where each
+ * token is used and which old values were mapped to the nearest token.
+ *
+ * `static` makes Tailwind emit every variable here, even those no class uses yet: the game
+ * canvas reads its colours from these custom properties at runtime.
+ */
+@theme static {
   --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+
+  /* Colours: UI */
+  --color-page-background: #e8bb3e; /* NOT from Figma: user's choice, awaiting product owner OK (see Open points) */
+  --color-text-primary: #2e2e2e; /* color/text/primary (→ color/foundation/neutral/900) */
+  --color-text-secondary: #777777; /* color/text/secondary (→ color/foundation/neutral/600) */
+  --color-text-link: #0060e6; /* color/text/link (→ color/foundation/palette/blue/900) */
+  --color-text-green: #089855; /* color/text/green (→ color/foundation/palette/green/800) */
+  --color-icon-default: #2e2e2e; /* color/icon/default (→ color/foundation/neutral/900) */
+  --color-surface-white: #ffffff; /* color/surface/white (→ color/foundation/neutral/0) */
+  --color-surface-gray-light: #f4f4f4; /* color/surface/gray-light (→ color/foundation/neutral/100) */
+  --color-surface-yellow-light: #fcf6b1; /* color/surface/yellow-light (→ color/foundation/palette/yellow/300) */
+  --color-surface-overlay-gray: #dcdcdcb2; /* color/surface/overlay/gray */
+  --color-button-tertiary-background: #ffffff; /* color/button/tertiary/background */
+  --color-button-secondary-background: #f4f4f4; /* color/button/secondary/background */
+  --color-state-hover-neutral: #dcdcdc; /* color/state/hover/neutral (→ color/foundation/neutral/250) */
+  --color-border-default: #e8e8e8; /* color/border/default (→ color/foundation/neutral/240) */
+  --color-border-divider: #d0d4d7; /* color/border/divider (→ color/foundation/neutral/300) */
+  --color-border-focus: #2e2e2e; /* color/border/focus (→ color/foundation/neutral/900) */
+
+  /* Colours: game canvas (src/game/draw.ts). The canvas also uses --color-page-background,
+     --color-surface-white and --color-text-green. */
+  --color-brand-gray-dark: #2e2e2e; /* color/brand/gray-dark (→ color/foundation/neutral/900) */
+  --color-brand-blue-light: #d7f1f6; /* color/brand/blue-light (→ color/foundation/palette/blue/100) */
+  --color-foundation-neutral-550: #969696; /* color/foundation/neutral/550 */
+  --color-foundation-palette-yellow-700: #e8b53e; /* color/foundation/palette/yellow/700 */
+  --color-foundation-palette-rust-500: #cc6119; /* color/foundation/palette/rust/500 */
+  --color-foundation-palette-rust-700: #a34d14; /* color/foundation/palette/rust/700 */
+  --color-foundation-palette-rust-900: #884111; /* color/foundation/palette/rust/900 */
+  --color-foundation-palette-orange-700: #ff5f37; /* color/foundation/palette/orange/700 */
+  --color-foundation-palette-red-700: #e8262a; /* color/foundation/palette/red/700 */
+
+  /* Typography: font sizes and line heights (DM Sans text styles) */
+  --text-xs: 0.75rem; /* text/text-xs/font-size (12) */
+  --text-xs--line-height: 1rem; /* text/text-xs/line-height (16) */
+  --text-sm: 0.875rem; /* text/text-sm/font-size (14) */
+  --text-sm--line-height: 1.25rem; /* text/text-sm/line-height (20) */
+  --text-base: 1rem; /* text/text-base/font-size (16) */
+  --text-base--line-height: 1.5rem; /* text/text-base/line-height (24) */
+  --text-lg: 1.125rem; /* text/text-lg/font-size (18) */
+  --text-lg--line-height: 1.75rem; /* text/text-lg/line-height (28) */
+  --text-xl: 1.25rem; /* text/text-xl/font-size (20) */
+  --text-xl--line-height: 1.75rem; /* text/text-xl/line-height (28) */
+  --text-2xl: 1.5rem; /* text/text-2xl/font-size (24) */
+  --text-2xl--line-height: 2rem; /* text/text-2xl/line-height (32) */
+  --text-3xl: 1.875rem; /* text/text-3xl/font-size (30) */
+  --text-3xl--line-height: 2.25rem; /* text/text-3xl/line-height (36) */
+  --text-4xl: 2.25rem; /* text/text-4xl/font-size (36) */
+  --text-4xl--line-height: 2.5rem; /* text/text-4xl/line-height (40) */
+  --text-5xl: 3rem; /* text/text-5xl/font-size (48) */
+  --text-5xl--line-height: 3rem; /* text/text-5xl/line-height (48) */
+
+  /* Typography: weights (from the text styles' DM Sans styles; no weight variables in Figma) */
+  --font-weight-normal: 400; /* Regular, eg. Body/Base - Regular */
+  --font-weight-semibold: 600; /* SemiBold, eg. Body/Base - Semibold */
+  --font-weight-bold: 700; /* Bold, eg. Display/5XL - Bold, Headline/2XL - Bold */
+
+  /* Spacing */
+  --spacing-1: 0.25rem; /* spacing/1 (4) */
+  --spacing-1-5: 0.375rem; /* spacing/1-5 (6) */
+  --spacing-2: 0.5rem; /* spacing/2 (8) */
+  --spacing-2-5: 0.625rem; /* spacing/2-5 (10) */
+  --spacing-3: 0.75rem; /* spacing/3 (12) */
+  --spacing-4: 1rem; /* spacing/4 (16) */
+  --spacing-5: 1.25rem; /* spacing/5 (20) */
+  --spacing-6: 1.5rem; /* spacing/6 (24) */
+  --spacing-8: 2rem; /* spacing/8 (32) */
+  --spacing-10: 2.5rem; /* spacing/10 (40) */
+  --spacing-12: 3rem; /* spacing/12 (48) */
+  --spacing-16: 4rem; /* spacing/16 (64) */
+  --spacing-20: 5rem; /* spacing/20 (80) */
+  --spacing-24: 6rem; /* spacing/24 (96) */
+
+  /* Radius */
+  --radius-xl: 0.75rem; /* radius/xl (12) */
+  --radius-3xl: 1.5rem; /* radius/3xl (24) */
+  --radius-full: 9999px; /* radius/full */
+  --radius-control-pill: 9999px; /* radius/control/pill (→ radius/full) */
+
+  /* Shadows */
+  --shadow-card-shadow: 0 1px 1px 0 #00000040; /* effect style card-shadow (drop shadow, x 0, y 1, blur 1, spread 0, #000000 25%) */
 }
