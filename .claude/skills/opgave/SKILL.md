@@ -1,24 +1,36 @@
 ---
 name: opgave
 description:
-  Solve one task (opgave) from SPEC.md, from start to pull request. Marks the
-  task as in progress, grills the user on every open implementation decision,
-  writes a plan, runs a fresh implementer subagent, then a review pass and a
-  verify pass, and loops until the user approves. Ends by marking the task
-  done and opening a pull request. Use when the user types /opgave with a task
-  number, or asks to work on a task from the spec.
-argument-hint: <task number, eg. 3>
+  Work with the tasks (opgaver) in SPEC.md. With a task number, solves that
+  task from start to pull request - marks it in progress, grills the user on
+  every open implementation decision, writes a plan, runs a fresh implementer
+  subagent, then a review pass and a verify pass, loops until the user
+  approves, marks it done and opens a PR. With a feature description instead,
+  even a vague one, interviews the user and adds it to SPEC.md as a new task
+  in the spec's format. Use when the user types /opgave, asks to work on a
+  task from the spec, or asks to add a task to it.
+argument-hint: <task number, eg. 3> | <description of a new task>
 ---
 
-# /opgave: one task from SPEC.md, start to PR
+# /opgave: solve a task from SPEC.md, or add one
+
+Talk to the user in the language they write in. Text visitors see on the
+site, and SPEC.md itself, are always Danish.
+
+Pick the mode from the arguments:
+
+- **A number** (`3`, `opgave 3`) → **Solve a task**, below.
+- **Anything else** (`ny: dark mode`, `a leaderboard for the game`) → **Add a
+  task**, further down.
+- **Empty** → ask (AskUserQuestion): solve an existing task, or add a new
+  one. For a new one, ask what the feature is.
+
+# Solve a task
 
 You are the orchestrator. You own the git state, the conversation with the
 user and the approval gates. Implementation and review run in fresh
 subagents with the plan file as the only handoff. Never write or review the
 task's code in this session yourself.
-
-Talk to the user in the language they write in. Text visitors see on the
-site is always Danish (SPEC.md ground rules).
 
 ## Status in SPEC.md
 
@@ -37,9 +49,9 @@ only when `main` says `Færdig`.
 
 1. `git fetch origin main`. The working tree must be clean; if it isn't, say
    what is uncommitted and stop.
-2. No task number in the arguments → read `SPEC.md` on `origin/main`, list
-   each task with its status, and ask which one (AskUserQuestion, the ones
-   marked `Ikke startet` first).
+2. The user chose to solve a task but named none → read `SPEC.md` on
+   `origin/main`, list each task with its status, and ask which one
+   (AskUserQuestion, the ones marked `Ikke startet` first).
 3. Read the task's whole section in `SPEC.md` and the ground rules.
 4. **Resume.** If branch `opgave-<n>` exists locally or on `origin`, check it
    out and continue from its state: no plan file → Phase 1; a plan but no
@@ -179,7 +191,7 @@ Phase 4 asks nothing; the Phase 3 approval covers it.
 4. Report: the PR URL, how many implement/review rounds it took, and the
    checklist items still left to the user.
 
-## Rules
+## Rules for solving
 
 - Never skip a gate: plan approval (Phase 1) and implementation approval
   (Phase 3).
@@ -190,3 +202,127 @@ Phase 4 asks nothing; the Phase 3 approval covers it.
 - Never push to `main` except the `I gang` status commit in Phase 0.
 - If a subagent fails or returns something unusable, tell the user and
   retry with a corrected work order; never quietly fill the gap yourself.
+
+# Add a task
+
+You turn a feature idea, often vague, into a new task in `SPEC.md` that
+reads like the ones already there. The reader is whoever solves it later,
+with `/opgave <n>` or by hand. **Besluttet** holds only what the user
+actually decides here; everything else goes to **Op til dig**, where the
+solve flow's interview picks it up. You write no code and create no branch.
+
+## 1. Read
+
+- `git fetch origin main` and read `SPEC.md` on `origin/main`: the intro,
+  the Grundregler, every task and the Ekstraopgaver. The new task follows
+  their format, tone and level of detail.
+- Read the code the idea touches, enough to know what exists today. A
+  question the code answers is research, not a decision.
+- If the idea names an external library, API or browser feature, look up its
+  current docs and status with WebSearch/WebFetch before you ask about it.
+- **Overlap.** If an existing task or stretch bullet already covers the idea,
+  or most of it, show which and ask (AskUserQuestion): extend that task, add
+  a new task anyway, or drop it. If the overlapping task is `I gang` or
+  `Færdig`, say so; a change to it then needs a new task.
+
+## 2. Grill the user
+
+Interview until you could write the task without guessing. Ask one question
+at a time with AskUserQuestion, all context in the question itself
+(2 sentences at most) with one concrete example, recommended option first
+and marked "(Recommended)".
+
+Every question also gets the option **"Op til den, der løser den"**. Take
+it seriously: a spec that decides everything leaves nothing to learn. Steer
+toward deciding what the product owner must own (scope, behaviour visitors
+see, real numbers and rules, what is out of scope, constraints such as
+performance or no backend) and toward leaving taste and code structure open.
+
+Cover, in roughly this order:
+
+1. **Goal:** what the visitor gets, in one sentence. Ask first if the idea is
+   too vague to say this.
+2. **Scope:** what is in, and what is explicitly out.
+3. **Behaviour:** the main flow and its edge cases, with real examples.
+4. **Placement:** where it lives in the SPA (a section on the front page, its
+   own route, a component that can be both).
+5. **Constraints:** facts it must use, data it may or may not touch,
+   performance, accessibility.
+6. **Blockers:** whether it needs another task done first. Only a true
+   technical dependency becomes a `**Kræver:**` line; a preferred order is
+   not one.
+7. **Done when:** how a reviewer checks it is finished. Each criterion must
+   be checkable by looking at the result, not by trusting the author.
+
+Follow up on answers that open new questions. Stop when nothing a reviewer
+would argue about is left implicit.
+
+## 3. Size
+
+If the answers describe more than one PR's worth of work, propose splitting
+it into several tasks with a `**Kræver:**` line where one needs the other.
+If it is small and optional, offer to add it as an Ekstraopgaver bullet
+instead of a full task. Ask (AskUserQuestion).
+
+## 4. Draft and confirm
+
+Write the task in Danish, in exactly this format, with the next free number:
+
+```
+## Opgave <n>: <titel>
+
+**Status:** Ikke startet
+
+**Mål:** <one or two sentences>
+
+**Kræver:** Opgave <m>.          (only for a real blocker)
+
+**Besluttet**
+
+- <one decision per bullet, concrete, with real values>
+
+**Op til dig:** <what the solver decides, in one sentence or a short list>
+
+**Færdig når**
+
+- <one checkable criterion per bullet>
+```
+
+- Same voice as the other tasks: "du", short sentences, no buzzwords.
+- File paths and names only where they point the way; no line numbers, no
+  code beyond a short identifier.
+- Wrap lines at 120 characters, indent bullet continuations by two spaces.
+- Unknown facts the product owner will supply (a link, a price) go in as
+  `_følger_`, and you name them in your report.
+
+Show the draft in full, plus the other changes to SPEC.md it needs:
+
+- a `**Kræver:**` line → update the intro's sentence about fixed
+  dependencies;
+- tests in the task → add its number to the Grundregler line listing the
+  tasks with tests;
+- a stretch bullet it replaces, or a task it extends.
+
+Gate (AskUserQuestion): **Add it** or **Change something**. Loop until
+approved.
+
+## 5. Write and publish
+
+1. Check out `main` and `git pull --ff-only`. The working tree must be clean;
+   if it isn't, say what is uncommitted and stop.
+2. Insert the task after the last `## Opgave` section, before
+   `## Ekstraopgaver`, with a `---` line on each side like the others. Apply
+   the other approved changes.
+3. Commit `SPEC.md` alone as `Add opgave <n>: <English title>` and push
+   `main`. If the push is rejected, pull and try once more; if it still
+   fails, tell the user and leave the commit local.
+4. Report: the task number and title, what else in SPEC.md changed, any
+   `_følger_` placeholders still to fill, and that `/opgave <n>` starts it.
+   Then stop; don't start solving it.
+
+## Rules for adding
+
+- Never write to `SPEC.md` before the user approves the draft.
+- Never change another task's **Besluttet** or **Færdig når** unless the user
+  chose to extend that task.
+- Never renumber existing tasks; branches and statuses refer to the numbers.

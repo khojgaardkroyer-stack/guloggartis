@@ -13,7 +13,8 @@ Hver opgave har et **mål**, **hvad der er besluttet** (lav det ikke om uden at 
 Hver opgave har en **status** lige under overskriften: `Ikke startet`, `I gang` eller `Færdig`. Med Claude Code kan
 du løse en opgave med `/opgave <nr>`. Den sætter opgaven til `I gang`, spørger dig om alle valg, der ikke er truffet,
 og skriver en plan. Derefter implementerer én agent planen, og en anden reviewer den, indtil du godkender. Til sidst
-sætter den opgaven til `Færdig` og laver PR'en.
+sætter den opgaven til `Færdig` og laver PR'en. Skriver du en beskrivelse i stedet for et nummer (fx
+`/opgave en highscore-liste til spillet`), spørger den dig ud om idéen og tilføjer den som en ny opgave i samme format.
 
 ## Grundregler
 
