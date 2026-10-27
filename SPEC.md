@@ -10,6 +10,11 @@ for at skulle laves om bagefter.
 Hver opgave har et **mål**, **hvad der er besluttet** (lav det ikke om uden at spørge), **hvad der er op til dig** og
 **færdig når** (de kriterier, vi gennemgår din PR ud fra). Sidder du fast, så spørg hellere tidligt end sent.
 
+Hver opgave har en **status** lige under overskriften: `Ikke startet`, `I gang` eller `Færdig`. Med Claude Code kan
+du løse en opgave med `/opgave <nr>`. Den sætter opgaven til `I gang`, spørger dig om alle valg, der ikke er truffet,
+og skriver en plan. Derefter implementerer én agent planen, og en anden reviewer den, indtil du godkender. Til sidst
+sætter den opgaven til `Færdig` og laver PR'en.
+
 ## Grundregler
 
 - Al tekst, som besøgende ser, er på dansk og holder tonen fra den nuværende side. Kode, commits og PR-titler er på
@@ -25,6 +30,8 @@ Hver opgave har et **mål**, **hvad der er besluttet** (lav det ikke om uden at 
 ---
 
 ## Opgave 0: Opvarmning, oprydning og det rigtige logo
+
+**Status:** Ikke startet
 
 **Mål:** et rent repo, en deploy, der afviser kode med fejl, og et spil med Gul&Gratis' rigtige logo.
 
@@ -57,6 +64,8 @@ logo.
 
 ## Opgave 1: Tests, og del spillets logik op fra tegningen
 
+**Status:** Ikke startet
+
 **Mål:** spillets regler kan testes uden en browser, og tegningen kan skiftes ud senere. Opgave 4 bygger på det her.
 
 `src/components/GGame.tsx` blander i dag tre ting i én komponent: spillets regler (tyngdekraft, hop, nye
@@ -82,6 +91,8 @@ forhindringer, kollisioner, point), tegningen på canvas og React-UI'en omkring 
 ---
 
 ## Opgave 2: Følg Gul&Gratis' designmanual med Figma i Claude Code
+
+**Status:** Ikke startet
 
 **Mål:** SPA'en ligner en del af guloggratis.dk i stedet for sin egen ting. Du lærer også at give et AI-værktøj et
 designsystem at arbejde ud fra, i stedet for at lade det gætte.
@@ -120,6 +131,8 @@ hånden.
 
 ## Opgave 3: Routing og en mock-404-side med spillet
 
+**Status:** Ikke startet
+
 **Mål:** SPA'en får mere end én side, og en forkert URL viser en 404-side i Gul&Gratis-stil, hvor man kan spille
 spillet.
 
@@ -153,6 +166,8 @@ kan du nå at levere pakken?").
 ---
 
 ## Opgave 4: Spillet bliver 3D efter 200 meter
+
+**Status:** Ikke startet
 
 **Mål:** spillet starter i 2D, som det er i dag. Efter 200 meter svinger kameraet om bag G'et, og løbet fortsætter i
 3D uden at stoppe.
@@ -190,6 +205,8 @@ flad sprite eller en ekstruderet form er alt sammen fint. Brug farverne fra desi
 ---
 
 ## Opgave 5: "Prøv det selv": en handel trin for trin
+
+**Status:** Ikke startet
 
 **Mål:** en gennemgang med spilelementer, hvor den besøgende spiller en SikkerHandel igennem som enten køber eller
 sælger, fra første bud til bedømmelse.
@@ -238,6 +255,8 @@ fremdriftsbjælke, en nedtælling for de 12 timer) og teksterne. Lidt humor er v
 
 ## Opgave 6: Gebyrberegner
 
+**Status:** Ikke startet
+
 **Mål:** den besøgende indtaster en pris og ser, hvad køber betaler, og hvad sælger får.
 
 **Besluttet**
@@ -266,6 +285,8 @@ fremdriftsbjælke, en nedtælling for de 12 timer) og teksterne. Lidt humor er v
 ---
 
 ## Opgave 7: Spot svindlen, en quiz
+
+**Status:** Ikke startet
 
 **Mål:** vis, hvorfor SikkerHandel findes. Den besøgende ser 5–6 opdigtede annoncer eller chatbeskeder og skal finde
 advarselstegnene.
