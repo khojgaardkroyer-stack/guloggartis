@@ -347,7 +347,7 @@ tredje), G'ets størrelse og teksten ved siden af. Brug tokens fra designmanuale
 
 ## Opgave 9: Easter egg i logoet
 
-**Status:** Ikke startet
+**Status:** I gang
 
 **Mål:** trykker den besøgende tre gange hurtigt på Gul&Gratis-logoet øverst til højre, skifter sidens baggrund til et
 hemmeligt billede.
