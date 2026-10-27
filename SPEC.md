@@ -96,9 +96,9 @@ designsystem at arbejde ud fra, i stedet for at lade det gætte.
   `src/index.css`) og hedde det samme som styles i Figma. Derefter må ingen komponent bruge en farve i firkantede
   parenteser som `bg-[#F3C91D]`, eller en størrelse i firkantede parenteser, hvor manualen har en token. Spillets mål
   som `aspect-[360/150]` er fine.
-- Opdatér derefter al UI, der findes i SPA'en på det tidspunkt, efter manualen: overskrifter, brødtekst, links, knapper, FAQ-skuffen, footeren og rammen
-  og pointvisningen omkring spillet. Hvor manualen har en komponent, så brug den. Hvor den ikke har, så byg ud fra
-  tokens; find ikke på nye farver eller størrelser.
+- Opdatér derefter al UI, der findes i SPA'en på det tidspunkt, efter manualen: overskrifter, brødtekst, links,
+  knapper, FAQ-skuffen, footeren og rammen og pointvisningen omkring spillet. Hvor manualen har en komponent, så brug
+  den. Hvor den ikke har, så byg ud fra tokens; find ikke på nye farver eller størrelser.
 - Hvis manualen angiver en skrifttype eller et ikonsæt, så brug det. Spørg, før du tilføjer en skrifttype, der ikke er
   gratis at bruge på nettet.
 - Logoerne, også spillerens logo fra Opgave 0, forbliver, som de er.
