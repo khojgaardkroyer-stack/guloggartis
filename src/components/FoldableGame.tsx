@@ -38,7 +38,7 @@ function GLabel({ logoRef, hover }: { logoRef: Ref<HTMLImageElement>; hover?: bo
             : 'size-16'
         }
       />
-      Hvorfor er der mon et G?
+      Aflever pakken
     </>
   )
 }
