@@ -2,16 +2,16 @@
 
 Single page app til at præsentere SikkerHandel fra Gul&Gratis.
 
-Bygget med React, TypeScript, Vite og Tailwind CSS.
+Bygget med React, TypeScript, Vite og Tailwind CSS. Kører på [Bun](https://bun.sh).
 
 ## Kom i gang
 
 ```bash
-npm install
-npm run dev      # udviklingsserver på http://localhost:5173/guloggartis/
-npm run build    # byg til dist/
-npm run preview  # se det byggede resultat lokalt
-npm run lint     # lint med oxlint
+bun install
+bun run dev      # udviklingsserver på http://localhost:5173/guloggartis/
+bun run build    # byg til dist/
+bun run preview  # se det byggede resultat lokalt
+bun run lint     # lint med oxlint
 ```
 
 ## Deploy
