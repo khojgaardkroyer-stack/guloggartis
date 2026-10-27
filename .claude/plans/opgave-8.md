@@ -16,7 +16,7 @@ folder det sammen igen. Hver side starter med G'et.
   Without `onClose`, `GGame` looks and behaves exactly as today.
 - **Closed state, a large free-standing G:** a `<button type="button">` containing the player logo
   (`src/assets/g-player.svg` as an `<img alt="">`) at `size-16` (64 px), with no background, and next to it the
-  text **"Hvorfor er der mon et G?"** as plain text (`text-lg font-semibold`, `text-text-primary`). The whole row
+  text **"Aflever pakken"** as plain text (`text-lg font-semibold`, `text-text-primary`). The whole row
   (G + text) is the one button, with `aria-expanded={false}`, `aria-controls` pointing at the game, and an
   accessible name from its text. It has a visible focus ring (`focus-visible:outline-2
   focus-visible:outline-border-focus`, as the canvas has) and a subtle hover (eg. the G scales up slightly with
@@ -95,7 +95,7 @@ instead of `npm run <script>`, because `npm` isn't installed.
 No new unit tests, see Decisions. The existing `bun run test` (engine and palette) must still pass.
 
 ## Done when
-- The front page and `/findes-ikke` show the G with "Hvorfor er der mon et G?" instead of the game, and pressing
+- The front page and `/findes-ikke` show the G with "Aflever pakken" instead of the game, and pressing
   the G unfolds the game to "Tryk for at starte". Check: the user checks both pages in `bun run dev`, and the
   reviewer confirms that both pages render `FoldableGame`.
 - It can be opened and closed with only the keyboard: Tab to the G, Enter or space opens it and focus lands on the
