@@ -56,6 +56,18 @@ folder det sammen igen. Hver side starter med G'et.
   tap, key or button (canvas, fullscreen, close) can start a run or act on a card that is being transformed.
 - **Not remembered:** `open` is plain React state starting at `false`; nothing goes in `localStorage`. The high
   score still uses the existing key `ggame-highscore`.
+- **The card must not shake while playing.** The user reports that during a run the game's card itself (the white
+  box with title, score and canvas) shakes a little. Find the root cause and fix it so the card stays perfectly
+  still. Likely suspects, check them in this order:
+  - The card's width or position depends on its content. Under `FoldableGame` the card may now be shrink-to-fit in
+    a flex row instead of `w-full`, so a changing score or message, or a re-render, changes its width and moves
+    it. On the front page it is right-aligned from `sm`, so a width change moves its left edge.
+  - The hidden placeholder copy of the G, or other per-frame re-renders or layout work, during the run.
+  - A leftover inline `transform`/`transition`/`opacity`/`will-change` on the card or an ancestor after the open
+    animation.
+  - The canvas backing store being resized in `draw()`, which changes layout.
+  - Whether the same shake already happens on `main` with the plain `GGame`.
+  The card must keep a stable width: the same `w-full max-w-[392px]` box it had before opgave 8.
 - **No changes to `src/game/`** (engine, draw, palette).
 - **No new tests.** The Grundregler only require tests for Opgave 1, 5 and 6, and this task is UI state and
   animation with no pure logic worth extracting.
