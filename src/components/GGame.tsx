@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { MdFullscreen, MdFullscreenExit } from 'react-icons/md'
+import { PiCornersIn, PiCornersOut } from 'react-icons/pi'
 import playerSrc from '../assets/g-player.svg'
 import { drawGame } from '../game/draw'
+import { readPalette, type GamePalette } from '../game/palette'
 import {
   HEIGHT,
   PLAYER_H,
@@ -47,6 +48,12 @@ function GGame() {
   const playerImg = useRef<HTMLImageElement | null>(null)
   // The player SVG rasterised once at the current canvas scale
   const playerSprite = useRef<{ scale: number; canvas: HTMLCanvasElement } | null>(null)
+  // Canvas colours from the theme's CSS variables, read once on mount (before the effects below draw)
+  const palette = useRef<GamePalette | null>(null)
+
+  useEffect(() => {
+    palette.current = readPalette(getComputedStyle(document.documentElement))
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -88,7 +95,7 @@ function GGame() {
   function draw() {
     const canvas = canvasRef.current
     const ctx = canvas?.getContext('2d')
-    if (!canvas || !ctx) return
+    if (!canvas || !ctx || !palette.current) return
     // Match the backing store to the displayed size so it stays sharp in fullscreen
     const scale = (window.devicePixelRatio || 1) * Math.max(canvas.clientWidth / WIDTH, 1)
     const pixelWidth = Math.round(WIDTH * scale)
@@ -97,7 +104,7 @@ function GGame() {
       canvas.height = Math.round(HEIGHT * scale)
     }
     ctx.setTransform(scale, 0, 0, scale, 0, 0)
-    drawGame(ctx, game.current, playerSpriteFor(scale))
+    drawGame(ctx, game.current, playerSpriteFor(scale), palette.current)
   }
 
   function recordHighScore(points: number) {
@@ -211,8 +218,8 @@ function GGame() {
       aria-label="Spil: Hop over forhindringerne"
       className={
         isFull
-          ? 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-white p-4'
-          : 'w-full max-w-[392px] rounded-3xl bg-white p-4 shadow-sm'
+          ? 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-surface-white p-4 text-text-primary'
+          : 'w-full max-w-[392px] rounded-3xl bg-surface-white p-4 text-text-primary shadow-card-shadow'
       }
     >
       <div
@@ -224,20 +231,25 @@ function GGame() {
           <h2 className={`font-bold ${isFull ? 'text-xl sm:text-2xl' : 'text-sm'}`}>
             Hop over forhindringerne
           </h2>
-          <div className="ml-auto flex shrink-0 items-center gap-1.5">
+          <div className="ml-auto flex shrink-0 items-center gap-1-5">
             <p
-              className={`font-mono whitespace-nowrap text-gray-600 tabular-nums ${isFull ? 'text-base sm:text-lg' : 'text-xs'}`}
+              className={`whitespace-nowrap text-text-secondary tabular-nums ${isFull ? 'text-base sm:text-lg' : 'text-xs'}`}
             >
               HI {String(highScore).padStart(5, '0')} {String(score).padStart(5, '0')}
             </p>
+            {/* Icon button as in the manual's modal close button: 16px icon, spacing/2 padding */}
             <button
               type="button"
               onClick={toggleFullscreen}
               aria-label={isFull ? 'Luk fuld skærm' : 'Fuld skærm'}
               title={isFull ? 'Luk fuld skærm' : 'Fuld skærm'}
-              className="flex size-7 items-center justify-center rounded-full bg-gray-100 text-lg transition hover:bg-gray-200"
+              className="flex items-center justify-center rounded-control-pill bg-button-secondary-background p-2 text-icon-default transition hover:bg-state-hover-neutral"
             >
-              {isFull ? <MdFullscreenExit aria-hidden="true" /> : <MdFullscreen aria-hidden="true" />}
+              {isFull ? (
+                <PiCornersIn aria-hidden="true" className="size-4" />
+              ) : (
+                <PiCornersOut aria-hidden="true" className="size-4" />
+              )}
             </button>
           </div>
         </div>
@@ -256,17 +268,17 @@ function GGame() {
                 handleInput()
               }
             }}
-            className="block aspect-[360/150] w-full cursor-pointer touch-manipulation rounded-xl focus-visible:outline-2 focus-visible:outline-gray-900"
+            className="block aspect-[360/150] w-full cursor-pointer touch-manipulation rounded-xl focus-visible:outline-2 focus-visible:outline-border-focus"
           />
           {message && (
             <p
-              className={`pointer-events-none absolute inset-x-0 text-center font-semibold ${isFull ? 'top-6 text-2xl sm:text-3xl' : status === 'won' ? 'top-2 text-lg' : 'top-2'} ${status === 'won' ? 'text-green-700' : 'text-gray-700'}`}
+              className={`pointer-events-none absolute inset-x-0 text-center font-semibold ${isFull ? 'top-6 text-2xl sm:text-3xl' : status === 'won' ? 'top-2 text-lg' : 'top-2'} ${status === 'won' ? 'text-text-green' : 'text-text-primary'}`}
             >
-              <span className="rounded-full bg-white/90 px-3 py-1">{message}</span>
+              <span className="rounded-full bg-surface-white/90 px-3 py-1">{message}</span>
             </p>
           )}
         </div>
-        <p className={`mt-2 px-1 text-gray-500 ${isFull ? 'text-sm sm:text-base' : 'text-xs'}`}>
+        <p className={`mt-2 px-1 text-text-secondary ${isFull ? 'text-sm sm:text-base' : 'text-xs'}`}>
           Hop med mellemrum, pil op eller tryk. Vind ved {WIN_SCORE} point!
         </p>
       </div>
