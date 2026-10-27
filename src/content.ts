@@ -1,6 +1,8 @@
 import type { IconType } from 'react-icons'
 import { PiArrowUUpLeft, PiHandshake, PiMagnifyingGlass } from 'react-icons/pi'
 
+export const GUL_OG_GRATIS_URL = 'https://www.guloggratis.dk/'
+
 export type Section = {
   /** Phosphor icon shown next to the heading */
   icon: IconType

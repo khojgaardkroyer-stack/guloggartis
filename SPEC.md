@@ -132,7 +132,7 @@ hånden.
 
 ## Opgave 3: Routing og en mock-404-side med spillet
 
-**Status:** I gang
+**Status:** Færdig
 
 **Mål:** SPA'en får mere end én side, og en forkert URL viser en 404-side i Gul&Gratis-stil, hvor man kan spille
 spillet.
