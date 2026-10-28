@@ -29,21 +29,24 @@ function hasWebGL(): boolean {
   return webglSupport
 }
 
-// Building the scene (extruding the G, prebuilding models, compiling shaders) takes a moment, so
-// it waits for idle time early in the run, long before the switch at SWITCH_METERS
+// Building the scene (the WebGL context and the G, then the obstacle models a kind at a time,
+// then the shaders) is spread over idle time early in the run, long before the switch at
+// SWITCH_METERS, so no single frame of the 2D run stalls for long
 const IDLE_TIMEOUT_MS = 1000
+// Where requestIdleCallback is missing (eg. Safari): the delay before the first step, and between steps
 const IDLE_FALLBACK_MS = 300
+const STEP_FALLBACK_MS = 30
 
 /**
- * Runs `callback` when the browser is idle, or after a short delay where that isn't supported
- * (eg. Safari). Returns a function that cancels it.
+ * Runs `callback` when the browser is idle, or after `fallbackMs` where that isn't supported.
+ * Returns a function that cancels it.
  */
-function whenIdle(callback: () => void): () => void {
+function whenIdle(callback: () => void, fallbackMs: number): () => void {
   if (typeof window.requestIdleCallback === 'function') {
     const id = window.requestIdleCallback(callback, { timeout: IDLE_TIMEOUT_MS })
     return () => window.cancelIdleCallback(id)
   }
-  const id = window.setTimeout(callback, IDLE_FALLBACK_MS)
+  const id = window.setTimeout(callback, fallbackMs)
   return () => window.clearTimeout(id)
 }
 
@@ -66,19 +69,19 @@ export function useScene3D(
   // Whether the current run may use 3D (WebGL and no reduced motion)
   const enabled = useRef(false)
   const lost = useRef(false)
-  const mounted = useRef(false)
-  // Cancels the scene creation waiting for idle time, if any
-  const cancelCreate = useRef<(() => void) | null>(null)
+  // Stops the scene being built, if any, and disposes what it has made so far
+  const cancelBuild = useRef<(() => void) | null>(null)
   const onLostRef = useRef(onLost)
   useEffect(() => {
     onLostRef.current = onLost
   })
 
   useEffect(() => {
-    mounted.current = true
     const canvas = canvasRef.current
     const handleLost = () => {
       lost.current = true
+      cancelBuild.current?.()
+      cancelBuild.current = null
       scene.current?.dispose()
       scene.current = null
       onLostRef.current()
@@ -90,11 +93,11 @@ export function useScene3D(
       observer.observe(canvas)
     }
     return () => {
-      mounted.current = false
-      cancelCreate.current?.()
-      cancelCreate.current = null
-      observer.disconnect()
+      // Disposing loses the context on purpose: that is not a lost 3D view
       canvas?.removeEventListener('webglcontextlost', handleLost)
+      observer.disconnect()
+      cancelBuild.current?.()
+      cancelBuild.current = null
       scene.current?.dispose()
       scene.current = null
     }
@@ -102,22 +105,55 @@ export function useScene3D(
 
   function prepare() {
     enabled.current = !lost.current && can3D({ webgl: hasWebGL(), reducedMotion: prefersReducedMotion() })
-    if (!enabled.current || scene.current || cancelCreate.current) return
-    loadSceneModule().then((module) => {
-      if (!module || !mounted.current || lost.current || scene.current || cancelCreate.current) return
-      // Until the scene exists, ready() returns null and the run stays in 2D
-      cancelCreate.current = whenIdle(() => {
-        cancelCreate.current = null
-        const canvas = canvasRef.current
-        if (!mounted.current || lost.current || scene.current || !canvas || !palette.current) return
-        try {
-          scene.current = module.createScene(canvas, palette.current)
-        } catch {
-          // No WebGL context after all: stay in 2D
-          lost.current = true
-        }
+    if (!enabled.current || scene.current || cancelBuild.current) return
+
+    // Until the scene is built and its shaders compiled, ready() returns null and the run stays in 2D
+    let cancelled = false
+    let building: Scene3D | null = null
+    let cancelIdle: (() => void) | null = null
+    const stop = () => {
+      cancelled = true
+      cancelIdle?.()
+      cancelIdle = null
+      // Also while compileAsync is pending: it resolves once the materials are disposed
+      building?.dispose()
+      building = null
+    }
+    cancelBuild.current = stop
+    // A cancelled build waits here for good, and is dropped
+    const pause = (fallbackMs: number) =>
+      new Promise<void>((resolve) => {
+        cancelIdle = whenIdle(() => {
+          cancelIdle = null
+          resolve()
+        }, fallbackMs)
       })
-    })
+
+    const build = async () => {
+      const module = await loadSceneModule()
+      if (!module || cancelled) return
+      await pause(IDLE_FALLBACK_MS)
+      const canvas = canvasRef.current
+      if (cancelled || !canvas || !palette.current) return
+      building = module.createScene(canvas, palette.current)
+      await building.warmUp(() => pause(STEP_FALLBACK_MS))
+      if (cancelled || !building) return
+      // The canvas may have changed size while the scene was being built
+      building.resize()
+      scene.current = building
+      building = null
+    }
+    build()
+      .catch(() => {
+        // No WebGL context after all: stay in 2D
+        if (cancelled) return
+        lost.current = true
+        building?.dispose()
+        building = null
+      })
+      .finally(() => {
+        if (cancelBuild.current === stop) cancelBuild.current = null
+      })
   }
 
   function ready(): Scene3D | null {

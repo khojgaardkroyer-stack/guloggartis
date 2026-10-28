@@ -57,6 +57,12 @@ export type Scene3D = {
   render(state: GameState, swing: number): void
   /** Matches the drawing buffer to the canvas's displayed size and redraws the last frame */
   resize(): void
+  /**
+   * Prebuilds a few models of every obstacle, one kind per `pause()`, then compiles every shader
+   * without blocking where the browser allows it. Resolves when the scene can draw without
+   * stalling; stops early if the scene is disposed meanwhile.
+   */
+  warmUp(pause: () => Promise<void>): Promise<void>
   dispose(): void
 }
 
@@ -448,16 +454,7 @@ export function createScene(canvas: HTMLCanvasElement, palette: GamePalette): Sc
   sun.position.set(-1, 1.6, 0.6)
   scene.add(sun)
 
-  // Build a few models of every obstacle now (out of sight), so the pools rarely grow mid-run and
-  // the shaders can be compiled before the switch to 3D
-  const templates = [...OBSTACLES.map((o) => o.make()), ...LANE_OBSTACLES.map((make) => make())]
-  for (const template of templates) {
-    for (const lane of template.kind === 'row' ? ([0, 'all'] as const) : ([0] as const)) {
-      const o: Obstacle = { ...template, x: -100_000, lane }
-      for (let i = 0; i < POOL_START; i++) obstacleModel(o, obstacleBox(o)).position.x = o.x
-    }
-  }
-
+  let disposed = false
   let last: { state: GameState; swing: number } | null = null
   const fogColor = new Color(palette.white)
 
@@ -524,14 +521,36 @@ export function createScene(canvas: HTMLCanvasElement, palette: GamePalette): Sc
     if (last) render(last.state, last.swing)
   }
 
+  // Builds a few models of every obstacle (out of sight, still visible so their shaders are
+  // compiled), one kind at a time between pauses, so the pools rarely grow mid-run. Then compiles
+  // every shader while the run is young, not on the switch at 200 m.
+  async function warmUp(pause: () => Promise<void>) {
+    const templates = [...OBSTACLES.map((o) => o.make()), ...LANE_OBSTACLES.map((make) => make())]
+    for (const template of templates) {
+      await pause()
+      if (disposed) return
+      for (const lane of template.kind === 'row' ? ([0, 'all'] as const) : ([0] as const)) {
+        const o: Obstacle = { ...template, x: -100_000, lane }
+        for (let i = 0; i < POOL_START; i++) obstacleModel(o, obstacleBox(o)).position.x = o.x
+      }
+    }
+    await pause()
+    if (disposed) return
+    resize()
+    // compileAsync only helps with KHR_parallel_shader_compile; without it, three warns and
+    // compiles as compile() does, with the linking finishing in the driver meanwhile
+    if (renderer.extensions.has('KHR_parallel_shader_compile')) await renderer.compileAsync(scene, camera)
+    else renderer.compile(scene, camera)
+  }
+
   resize()
-  // Compile every shader now, while the run is young, not on the switch at 200 m
-  renderer.compile(scene, camera)
 
   return {
     render,
     resize,
+    warmUp,
     dispose() {
+      disposed = true
       last = null
       for (const item of [...geometries, ...materials, ...textures]) item.dispose()
       dashes.dispose()
