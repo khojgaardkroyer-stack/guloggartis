@@ -474,7 +474,7 @@ function GGame({ id, onClose }: GGameProps) {
               press.current = null
             }}
             onKeyDown={handleKeyDown}
-            className={`block aspect-[360/150] w-full cursor-pointer rounded-xl focus-visible:outline-2 focus-visible:outline-border-focus ${lanes ? 'touch-none' : 'touch-manipulation'}`}
+            className={`block aspect-[360/150] w-full cursor-pointer rounded-xl focus-visible:outline-2 focus-visible:outline-border-focus ${lanes && status === 'running' ? 'touch-none' : 'touch-manipulation'}`}
           />
           {/* The 3D view sits over the 2D board; the 2D canvas keeps focus and input */}
           <canvas
