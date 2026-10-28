@@ -68,6 +68,7 @@ const DASH_LEN = 12
 const LINE_W = 1.5 // the 2D ground line's width
 const SURFACE = 0.15 // how far tape, windows and lines sit out from a surface
 const G_DEPTH = 6
+const POOL_START = 3 // models built up front per obstacle kind and size
 
 type Span = [number, number]
 
@@ -116,6 +117,17 @@ export function createScene(canvas: HTMLCanvasElement, palette: GamePalette): Sc
     track: decal(palette.track),
     dash: decal(palette.groundDash),
     footprint: decal(palette.ink, 0.2),
+  }
+
+  // Geometries made for one obstacle kind and size, built once and shared by all its pooled models
+  const sharedGeometries = new Map<string, BufferGeometry>()
+  const shared = (key: string, make: () => BufferGeometry) => {
+    let geometry = sharedGeometries.get(key)
+    if (!geometry) {
+      geometry = keep(make())
+      sharedGeometries.set(key, geometry)
+    }
+    return geometry
   }
 
   // Unit geometries, scaled per mesh. The box's origin is the middle of its bottom face.
@@ -207,7 +219,9 @@ export function createScene(canvas: HTMLCanvasElement, palette: GamePalette): Sc
         const r = Math.min(w, d) / 2
         const foot = 3
         box(g, mat.coneBase, [w / 2 - r, w / 2 + r], [0, foot], [-r, r])
-        const coneGeometry = keep(new ConeGeometry(r - 1, h - foot, 16).translate(0, (h - foot) / 2, 0))
+        const coneGeometry = shared(`cone:${r}:${h}`, () =>
+          new ConeGeometry(r - 1, h - foot, 16).translate(0, (h - foot) / 2, 0),
+        )
         const cone = new Mesh(coneGeometry, mat.cone)
         cone.position.set(w / 2, foot, 0)
         g.add(cone)
@@ -216,7 +230,9 @@ export function createScene(canvas: HTMLCanvasElement, palette: GamePalette): Sc
         const bandTop = h * 0.55
         const bandBottom = bandTop - 3
         const band = new Mesh(
-          keep(new CylinderGeometry(radiusAt(bandTop), radiusAt(bandBottom), 3, 16, 1, true)),
+          shared(`coneBand:${r}:${h}`, () =>
+            new CylinderGeometry(radiusAt(bandTop), radiusAt(bandBottom), 3, 16, 1, true),
+          ),
           mat.white,
         )
         band.position.set(w / 2, bandBottom + 1.5, 0)
@@ -232,16 +248,17 @@ export function createScene(canvas: HTMLCanvasElement, palette: GamePalette): Sc
         const front = -SURFACE
         const left = z0 - SURFACE
         const right = z1 + SURFACE
-        const vertices = [
-          [front, h, z0, front, tip, 0],
-          [front, tip, 0, front, h, z1],
-          [0, h, left, w / 2, tip, left],
-          [w / 2, tip, left, w, h, left],
-          [0, h, right, w / 2, tip, right],
-          [w / 2, tip, right, w, h, right],
-        ].flat()
-        const flap = keep(new BufferGeometry())
-        flap.setAttribute('position', new Float32BufferAttribute(vertices, 3))
+        const flap = shared(`envelopeFlap:${w}:${h}:${d}`, () => {
+          const vertices = [
+            [front, h, z0, front, tip, 0],
+            [front, tip, 0, front, h, z1],
+            [0, h, left, w / 2, tip, left],
+            [w / 2, tip, left, w, h, left],
+            [0, h, right, w / 2, tip, right],
+            [w / 2, tip, right, w, h, right],
+          ].flat()
+          return new BufferGeometry().setAttribute('position', new Float32BufferAttribute(vertices, 3))
+        })
         g.add(new LineSegments(flap, mat.inkLine))
         const seal = (x: number, z: number, rotateX: number, rotateZ: number) => {
           const disc = new Mesh(unitCylinder, mat.seal)
@@ -431,13 +448,13 @@ export function createScene(canvas: HTMLCanvasElement, palette: GamePalette): Sc
   sun.position.set(-1, 1.6, 0.6)
   scene.add(sun)
 
-  // Build one model of every obstacle now (out of sight), so the pools start filled and the
-  // shaders can be compiled before the switch to 3D
+  // Build a few models of every obstacle now (out of sight), so the pools rarely grow mid-run and
+  // the shaders can be compiled before the switch to 3D
   const templates = [...OBSTACLES.map((o) => o.make()), ...LANE_OBSTACLES.map((make) => make())]
   for (const template of templates) {
     for (const lane of template.kind === 'row' ? ([0, 'all'] as const) : ([0] as const)) {
       const o: Obstacle = { ...template, x: -100_000, lane }
-      obstacleModel(o, obstacleBox(o)).position.x = o.x
+      for (let i = 0; i < POOL_START; i++) obstacleModel(o, obstacleBox(o)).position.x = o.x
     }
   }
 
