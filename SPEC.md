@@ -288,7 +288,7 @@ fremdriftsbjælke, en nedtælling for de 12 timer) og teksterne. Lidt humor er v
 
 ## Opgave 7: Spot svindlen, en quiz
 
-**Status:** I gang
+**Status:** Færdig
 
 **Mål:** vis, hvorfor SikkerHandel findes. Den besøgende ser 5–6 opdigtede annoncer eller chatbeskeder og skal finde
 advarselstegnene.
