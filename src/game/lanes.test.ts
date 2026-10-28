@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   GROUND_Y,
   LANE_CHANGE_SECONDS,
+  LANE_DROP_X,
   PLAYER_H,
   PLAYER_W,
   PLAYER_X,
@@ -294,7 +295,8 @@ describe('winning in lane mode', () => {
       ['parcel', 1],
     ])
 
-    // Nothing kept touches the G on its way to the middle lane or the shop, and it all scrolls away
+    // Nothing kept touches the G on its way to the middle lane or the shop, and it all scrolls
+    // behind the G (where it stays, out of the chase camera's view once the G walks to the door)
     for (let i = 0; i < 60 * 30 && s.status === 'delivering'; i++) {
       s = step(s, DT, NO_INPUT, noRng)
       for (const o of s.obstacles) {
@@ -303,7 +305,7 @@ describe('winning in lane mode', () => {
       }
     }
     expect(s.status).toBe('won')
-    expect(s.obstacles).toEqual([])
+    for (const o of s.obstacles) expect(o.x + o.w).toBeLessThan(PLAYER_X)
   })
 
   it('keeps obstacles beside the G in both outer lanes when it is in the middle', () => {
@@ -313,5 +315,51 @@ describe('winning in lane mode', () => {
     })
     s = step(s, DT, NO_INPUT, noRng)
     expect(s.obstacles.map((o) => o.kind)).toEqual(['van', 'tower'])
+  })
+})
+
+describe('passed obstacles', () => {
+  // Steps until the obstacle is gone, checking every frame that the run goes on. Returns the
+  // obstacle's last right edge (x + w) while it was kept, and how far the track moved in the
+  // frame that dropped it.
+  function passBy(state: GameState): { lastRight: number; lastMove: number; keptBehindZero: boolean } {
+    let s = state
+    let lastRight = Infinity
+    let lastMove = 0
+    let keptBehindZero = false
+    for (let i = 0; i < 600 && s.obstacles.length > 0; i++) {
+      const next = step(s, DT, NO_INPUT, noRng)
+      expect(next.status).toBe('running')
+      lastMove = next.distance - s.distance
+      lastRight = s.obstacles[0].x + s.obstacles[0].w
+      if (next.obstacles.length > 0 && next.obstacles[0].x + next.obstacles[0].w <= 0) keptBehindZero = true
+      s = next
+    }
+    expect(s.obstacles).toHaveLength(0)
+    return { lastRight, lastMove, keptBehindZero }
+  }
+
+  it('in lane mode are kept behind the G until past LANE_DROP_X, and never collide meanwhile', () => {
+    for (const template of [PARCEL, VAN, TOWER, ROW]) {
+      // Just behind the G in its own lane (a row is across all of them), and beside it in a side lane
+      const starts = [
+        laneGame({ obstacles: [placed(template, template === ROW ? 'all' : 0, PLAYER_X - template.w - 1)] }),
+        ...(template === ROW ? [] : [laneGame({ obstacles: [placed(template, -1, PLAYER_X)] })]),
+      ]
+      for (const start of starts) {
+        const { lastRight, lastMove, keptBehindZero } = passBy(start)
+        expect(keptBehindZero).toBe(true)
+        expect(lastRight).toBeGreaterThan(LANE_DROP_X)
+        expect(lastRight - lastMove).toBeLessThanOrEqual(LANE_DROP_X)
+      }
+    }
+  })
+
+  it('with lane mode off are still removed once x + w <= 0', () => {
+    const start: GameState = { ...startGame(), nextObstacleIn: 100, obstacles: [placed(PARCEL, 0, PLAYER_X - 19)] }
+    const { lastRight, lastMove, keptBehindZero } = passBy(start)
+    expect(keptBehindZero).toBe(false)
+    expect(lastRight).toBeGreaterThan(0)
+    expect(lastRight - lastMove).toBeLessThanOrEqual(0)
   })
 })

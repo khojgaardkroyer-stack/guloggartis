@@ -26,6 +26,10 @@ export const LANE_W = 40 // distance between lane centres, in game units
 export const LANE_CHANGE_SECONDS = 0.15 // time to glide one lane sideways
 export const OBSTACLE_SIDE_W = 30 // an obstacle's width across the track, inside its lane
 const SIDE_PAD = 5 // forgiving sideways hitbox, like the 5 px padding in collides()
+// In lane mode an obstacle is kept until it is wholly behind this x (2D drops it at x = 0), so it
+// leaves the 3D view behind the chase camera (at about x = -97) instead of vanishing in sight.
+// It is behind the G by then, so it can't collide. view3d.test.ts checks it is behind the camera.
+export const LANE_DROP_X = -150
 
 export type Status = 'ready' | 'running' | 'delivering' | 'over' | 'won'
 // van and tower only spawn in lane mode and are too tall to jump over
@@ -226,7 +230,8 @@ export function step(state: GameState, dt: number, input: GameInput, rng: Rng = 
   const move =
     g.shopX === null ? g.speed * dt : Math.min(g.speed * dt, Math.max(g.shopX - SHOP_STOP_X, 0))
   g.distance += move
-  g.obstacles = state.obstacles.map((o) => ({ ...o, x: o.x - move })).filter((o) => o.x + o.w > 0)
+  const dropX = g.lanes ? LANE_DROP_X : 0
+  g.obstacles = state.obstacles.map((o) => ({ ...o, x: o.x - move })).filter((o) => o.x + o.w > dropX)
   if (g.shopX !== null) g.shopX -= move
 
   if (!delivering) {

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   GROUND_Y,
   HEIGHT,
+  LANE_DROP_X,
   OBSTACLES,
   LANE_OBSTACLES,
   PLAYER_H,
@@ -82,6 +83,13 @@ describe('cameraPose', () => {
     expect(pose.shift).toBe(0)
     // Fog fades obstacles in around the spawn point
     expect(pose.fogFar).toBeGreaterThan(WIDTH - px - 20)
+  })
+
+  it('sees lane-mode obstacles leave behind it: LANE_DROP_X is behind the chase camera', () => {
+    // The camera only moves forward from here (it follows the G to the shop door), so an obstacle
+    // dropped at LANE_DROP_X is out of view. Keep a margin so the two can't drift together.
+    expect(LANE_DROP_X).toBeLessThan(cameraPose(1).position[0] - 30)
+    expect(LANE_DROP_X).toBeLessThan(cameraPose(1, 200).position[0] - 30)
   })
 
   it('rises with a jump in the chase view, but not in the side view', () => {
