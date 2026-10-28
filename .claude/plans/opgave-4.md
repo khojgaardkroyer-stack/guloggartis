@@ -55,8 +55,11 @@ skrives i PR'en. Alt andet i Besluttet gælder stadig.
   (holding a jump key keeps jumping as before). Touch/mouse on the board: in lane mode, a horizontal swipe of at
   least 30 px (and more horizontal than vertical) steers that way; a tap in the outer 20 % of the board's width on
   the left or right steers that way; a tap in the middle 60 % or an upward swipe jumps. Decide the gesture on
-  pointerup (start on pointerdown, with pointer capture), except that a tap in the middle jumps on pointerdown as
-  today so jumps don't get slower. With lane mode off, every tap jumps on pointerdown exactly as today. A tap
+  pointerup (start on pointerdown, with pointer capture). A press in the middle 60 % never jumps on pointerdown in
+  lane mode: it jumps as soon as the pointer is released or has stayed within 10 px horizontally for ~80 ms
+  (`TAP_JUMP_DELAY_MS`), whichever comes first; if it moves 10 px or more horizontally first, it is a swipe
+  candidate and never jumps (an upward swipe still jumps). So a swipe never also jumps. With lane mode off, every
+  tap jumps on pointerdown exactly as today. A tap
   that starts a new run (ready/over/won) always just starts it, wherever it lands.
 - **Switch constant:** `SWITCH_METERS = 200` as a named, exported constant (in `src/game/view3d.ts`, below).
   The switch starts in the first frame where `score >= SWITCH_METERS` during a run, once per run. Lane mode
