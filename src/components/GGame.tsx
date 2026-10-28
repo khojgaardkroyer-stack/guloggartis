@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { type KeyboardEvent as ReactKeyboardEvent, type PointerEvent, useEffect, useRef, useState } from 'react'
 import { PiCornersIn, PiCornersOut, PiX } from 'react-icons/pi'
 import playerSrc from '../assets/g-player.svg'
 import { drawGame } from '../game/draw'
@@ -9,11 +9,15 @@ import {
   PLAYER_W,
   WIDTH,
   WIN_SCORE,
+  enterLanes,
   newGame,
   startGame,
   step,
   type Status,
 } from '../game/engine'
+import { endPress, holdPress, startPress, type Press } from '../game/gesture'
+import { FADE_IN_MS, SWING_SECONDS, SWITCH_METERS, swingTimeScale } from '../game/view3d'
+import { useScene3D } from './useScene3D'
 
 const HIGH_SCORE_KEY = 'ggame-highscore'
 
@@ -33,6 +37,15 @@ function saveHighScore(score: number) {
   }
 }
 
+// 2d: the 2D board. swing: the camera swings round behind the G. 3d: the chase view, in lanes.
+type View = '2d' | 'swing' | '3d'
+
+// A press on the board in lane mode: where and when it started, how far it has moved sideways
+type Pointer = { x: number; y: number; dx: number; downAt: number; press: Press }
+
+const STEER_KEYS: Record<string, -1 | 1> = { ArrowLeft: -1, a: -1, A: -1, ArrowRight: 1, d: 1, D: 1 }
+const JUMP_KEYS = new Set([' ', 'ArrowUp', 'w', 'W'])
+
 type GGameProps = {
   id?: string
   // When set, a close button is shown next to the fullscreen button
@@ -41,11 +54,23 @@ type GGameProps = {
 
 function GGame({ id, onClose }: GGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const canvas3dRef = useRef<HTMLCanvasElement>(null)
   const sectionRef = useRef<HTMLElement>(null)
   const [isFull, setIsFull] = useState(false)
   const [status, setStatus] = useState<Status>('ready')
   const [score, setScore] = useState(0)
   const [highScore, setHighScore] = useState(readHighScore)
+  // The view lives in a ref for the loop; the state copy is only for what React renders
+  const view = useRef<View>('2d')
+  const [shownView, setShownView] = useState<View>('2d')
+  const [lanes, setLanes] = useState(false)
+  const swingStart = useRef(0)
+  // Swing progress the 3D view is drawn at: 0..1 during the swing, 1 in 3D
+  const swing = useRef(0)
+  const pendingSteer = useRef<(-1 | 1)[]>([])
+  // Presses in lane mode by pointerId, so two thumbs on a phone are each read on their own
+  const presses = useRef(new Map<number, Pointer>())
+  const cleared2D = useRef(false)
 
   // Game state lives in a ref so the animation loop doesn't re-render React
   const game = useRef(newGame())
@@ -60,6 +85,43 @@ function GGame({ id, onClose }: GGameProps) {
   useEffect(() => {
     palette.current = readPalette(getComputedStyle(document.documentElement))
   }, [])
+
+  const scene3d = useScene3D(canvas3dRef, palette, handleContextLost)
+
+  function setView(next: View) {
+    view.current = next
+    setShownView(next)
+  }
+
+  // Back to the 2D board, for a new run or when the game is closed
+  function resetView() {
+    setView('2d')
+    swing.current = 0
+    setLanes(false)
+    pendingSteer.current = []
+    presses.current.clear()
+  }
+
+  // The 3D view is gone for this mount. A run in lanes can't go on in 2D, so it ends as a loss.
+  function handleContextLost() {
+    if (view.current === '2d') return
+    setView('2d')
+    setLanes(false)
+    presses.current.clear()
+    const g = game.current
+    if (g.lanes) {
+      const ended = g.status === 'running' || g.status === 'delivering'
+      if (g.status === 'running') recordHighScore(g.score)
+      if (ended) setStatus('over')
+      // The 2D board never shows lanes: keep only what lies in the G's lane and 2D can draw
+      const lane = Math.round(g.laneX)
+      const obstacles = g.obstacles.filter(
+        (o) => (o.lane === 'all' || o.lane === lane) && o.kind !== 'van' && o.kind !== 'tower',
+      )
+      game.current = { ...g, status: ended ? 'over' : g.status, lanes: false, lane: 0, laneX: 0, obstacles }
+    }
+    draw()
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -99,9 +161,18 @@ function GGame({ id, onClose }: GGameProps) {
   }
 
   function draw() {
+    const scene = view.current === '2d' ? null : scene3d.ready()
+    scene?.render(game.current, swing.current)
     const canvas = canvasRef.current
     const ctx = canvas?.getContext('2d')
     if (!canvas || !ctx || !palette.current) return
+    // The 2D board stays under the 3D view while that fades in; after that only 3D is drawn
+    if (scene && performance.now() - swingStart.current > FADE_IN_MS) {
+      if (!cleared2D.current) ctx.clearRect(0, 0, canvas.width, canvas.height)
+      cleared2D.current = true
+      return
+    }
+    cleared2D.current = false
     // Match the backing store to the displayed size so it stays sharp in fullscreen
     const scale = (window.devicePixelRatio || 1) * Math.max(canvas.clientWidth / WIDTH, 1)
     const pixelWidth = Math.round(WIDTH * scale)
@@ -126,12 +197,19 @@ function GGame({ id, onClose }: GGameProps) {
   function handleInput() {
     if (status === 'delivering') return
     if (status !== 'running') {
+      resetView()
       game.current = startGame()
       setScore(0)
       setStatus('running')
     }
     pendingJump.current = true
   }
+
+  // Each run decides whether it may switch to 3D, and starts fetching the 3D code if so
+  useEffect(() => {
+    if (status === 'running') scene3d.prepare()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status])
 
   useEffect(() => {
     if (status !== 'running' && status !== 'delivering') {
@@ -145,7 +223,31 @@ function GGame({ id, onClose }: GGameProps) {
       const dt = Math.min((now - last) / 1000, 0.05)
       last = now
       const prev = game.current
-      const g = step(prev, dt, { jump: pendingJump.current })
+
+      // At SWITCH_METERS, or as soon as the 3D code has loaded after that, swing into 3D
+      const due = prev.status === 'running' && prev.score >= SWITCH_METERS
+      if (view.current === '2d' && due && scene3d.ready()) {
+        swingStart.current = now
+        setView('swing')
+      }
+      // A press held still in the middle jumps without waiting for the release
+      for (const p of presses.current.values()) holdPointer(p, now)
+      // The swing runs in real time while the game runs in slow motion
+      let timeScale = 1
+      if (view.current === 'swing') {
+        swing.current = Math.min((now - swingStart.current) / 1000 / SWING_SECONDS, 1)
+        timeScale = swingTimeScale(swing.current)
+        if (swing.current >= 1) {
+          setView('3d')
+          game.current = enterLanes(game.current)
+          setLanes(true)
+        }
+      }
+
+      const g = step(game.current, dt * timeScale, {
+        jump: pendingJump.current,
+        steer: pendingSteer.current.shift(),
+      })
       pendingJump.current = false
       game.current = g
 
@@ -155,7 +257,10 @@ function GGame({ id, onClose }: GGameProps) {
       if (g.status !== prev.status) {
         if (g.status === 'over' || g.status === 'delivering') recordHighScore(g.score)
         setStatus(g.status)
-        if (g.status === 'over' || g.status === 'won') return
+        if (g.status === 'over' || g.status === 'won') {
+          presses.current.clear()
+          return
+        }
       }
       frame = requestAnimationFrame(tick)
     }
@@ -164,6 +269,70 @@ function GGame({ id, onClose }: GGameProps) {
     return () => cancelAnimationFrame(frame)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status])
+
+  // Steering only works in lane mode during a run
+  function canSteer() {
+    return game.current.lanes && game.current.status === 'running'
+  }
+
+  function handleKeyDown(e: ReactKeyboardEvent<HTMLCanvasElement>) {
+    if (JUMP_KEYS.has(e.key)) {
+      e.preventDefault()
+      handleInput()
+      return
+    }
+    const steer = STEER_KEYS[e.key]
+    if (steer && canSteer()) {
+      e.preventDefault()
+      // One lane per press; holding the key doesn't repeat
+      if (!e.repeat) pendingSteer.current.push(steer)
+    }
+  }
+
+  function handlePointerDown(e: PointerEvent<HTMLCanvasElement>) {
+    e.preventDefault()
+    if (!canSteer()) {
+      handleInput()
+      return
+    }
+    // In lanes a press is read as it moves and when it ends, so a swipe never also jumps
+    const rect = e.currentTarget.getBoundingClientRect()
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    } catch {
+      // Capture is only a nicety: the swipe still counts if it ends on the board
+    }
+    presses.current.set(e.pointerId, {
+      x: e.clientX,
+      y: e.clientY,
+      dx: 0,
+      downAt: performance.now(),
+      press: startPress(e.clientX - rect.left, rect.width),
+    })
+  }
+
+  function holdPointer(p: Pointer, now: number) {
+    const held = holdPress(p.press, p.dx, now - p.downAt)
+    p.press = held.press
+    if (held.jump && canSteer()) pendingJump.current = true
+  }
+
+  function handlePointerMove(e: PointerEvent<HTMLCanvasElement>) {
+    const p = presses.current.get(e.pointerId)
+    if (!p) return
+    p.dx = e.clientX - p.x
+    holdPointer(p, performance.now())
+  }
+
+  function handlePointerUp(e: PointerEvent<HTMLCanvasElement>) {
+    const p = presses.current.get(e.pointerId)
+    if (!p) return
+    presses.current.delete(e.pointerId)
+    if (!canSteer()) return
+    const gesture = endPress(p.press, e.clientX - p.x, e.clientY - p.y)
+    if (gesture === 'left' || gesture === 'right') pendingSteer.current.push(gesture === 'left' ? -1 : 1)
+    else if (gesture === 'jump') pendingJump.current = true
+  }
 
   // Native fullscreen where supported (not on iPhone); otherwise cover the window with CSS
   function toggleFullscreen() {
@@ -183,6 +352,7 @@ function GGame({ id, onClose }: GGameProps) {
   // Stop the run (saving the high score as on a loss), leave fullscreen first, then hand over to onClose
   function close() {
     if (status === 'running') recordHighScore(game.current.score)
+    resetView()
     game.current = newGame()
     setScore(0)
     setStatus('ready')
@@ -262,14 +432,12 @@ function GGame({ id, onClose }: GGameProps) {
                 widest-case copy ("0" is the widest digit) fixes the box's width, so the header never
                 re-wraps mid-run and the card can't change height */}
             <p
-              className={`grid whitespace-nowrap text-text-secondary tabular-nums ${isFull ? 'text-base sm:text-lg' : 'text-xs'}`}
+              className={`grid whitespace-pre text-text-secondary tabular-nums ${isFull ? 'text-base sm:text-lg' : 'text-xs'}`}
             >
               <span aria-hidden="true" className="invisible col-start-1 row-start-1">
-                HI 00000 00000
+                {'HI 0000 m  0000 m'}
               </span>
-              <span className="col-start-1 row-start-1 text-right">
-                HI {String(highScore).padStart(5, '0')} {String(score).padStart(5, '0')}
-              </span>
+              <span className="col-start-1 row-start-1 text-right">{`HI ${highScore} m  ${score} m`}</span>
             </p>
             {/* Icon button as in the manual's modal close button: 16px icon, spacing/2 padding */}
             <button
@@ -303,17 +471,20 @@ function GGame({ id, onClose }: GGameProps) {
             ref={canvasRef}
             tabIndex={0}
             aria-label="Spillepladen. Tryk mellemrum, pil op eller på skærmen for at hoppe."
-            onPointerDown={(e) => {
-              e.preventDefault()
-              handleInput()
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={(e) => {
+              presses.current.delete(e.pointerId)
             }}
-            onKeyDown={(e) => {
-              if (e.key === ' ' || e.key === 'ArrowUp') {
-                e.preventDefault()
-                handleInput()
-              }
-            }}
-            className="block aspect-[360/150] w-full cursor-pointer touch-manipulation rounded-xl focus-visible:outline-2 focus-visible:outline-border-focus"
+            onKeyDown={handleKeyDown}
+            className={`block aspect-[360/150] w-full cursor-pointer rounded-xl focus-visible:outline-2 focus-visible:outline-border-focus ${lanes && status === 'running' ? 'touch-none' : 'touch-manipulation'}`}
+          />
+          {/* The 3D view sits over the 2D board; the 2D canvas keeps focus and input */}
+          <canvas
+            ref={canvas3dRef}
+            aria-hidden="true"
+            className={`pointer-events-none absolute inset-0 size-full rounded-xl ${shownView === '2d' ? 'opacity-0' : 'opacity-100 transition-opacity duration-200'}`}
           />
           {message && (
             <p
@@ -324,7 +495,9 @@ function GGame({ id, onClose }: GGameProps) {
           )}
         </div>
         <p className={`mt-2 px-1 text-text-secondary ${isFull ? 'text-sm sm:text-base' : 'text-xs'}`}>
-          Hop med mellemrum, pil op eller tryk. Vind ved {WIN_SCORE} point!
+          {lanes
+            ? 'Hop med mellemrum, pil op eller W. Skift bane med pilene, A/D, swipe eller tryk i siderne.'
+            : `Hop med mellemrum, pil op eller tryk. Vind ved ${WIN_SCORE} m!`}
         </p>
       </div>
     </section>

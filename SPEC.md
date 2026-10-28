@@ -169,7 +169,7 @@ kan du nå at levere pakken?").
 
 ## Opgave 4: Spillet bliver 3D efter 200 meter
 
-**Status:** I gang
+**Status:** Færdig
 
 **Mål:** spillet starter i 2D, som det er i dag. Efter 200 meter svinger kameraet om bag G'et, og løbet fortsætter i
 3D uden at stoppe.
