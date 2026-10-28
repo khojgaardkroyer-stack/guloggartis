@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { items, type QuizItem } from './items'
-import { isCorrect, resultText, scoreOf, shuffle, splitOnWarning } from './quiz'
+import { drawRound, isCorrect, resultText, scoreOf, shuffle, splitOnWarning } from './quiz'
 
 /** Deterministic pseudo-random sequence for tests. */
 function seededRng(seed: number) {
@@ -106,9 +106,9 @@ function warningField(item: QuizItem): string | undefined {
 }
 
 describe('items', () => {
-  it('has 6 items, exactly 2 of them fine', () => {
-    expect(items).toHaveLength(6)
-    expect(items.filter((item) => !item.isScam)).toHaveLength(2)
+  it('has 12 items, exactly 4 of them fine', () => {
+    expect(items).toHaveLength(12)
+    expect(items.filter((item) => !item.isScam)).toHaveLength(4)
   })
 
   it('has unique ids', () => {
@@ -130,5 +130,28 @@ describe('items', () => {
       expect(item.warning).toBeUndefined()
       expect(item.warningIn).toBeUndefined()
     }
+  })
+})
+
+describe('drawRound', () => {
+  const rngs: [string, () => number][] = [
+    ['always 0', () => 0],
+    ['always just under 1', () => 0.999999],
+    ...[1, 2, 3, 42, 1234].map((seed) => [`seed ${seed}`, seededRng(seed)] as [string, () => number]),
+  ]
+
+  it.each(rngs)('returns 6 distinct pool items, 4 scams and 2 fine (%s)', (_name, rng) => {
+    const round = drawRound(items, rng)
+    expect(round).toHaveLength(6)
+    expect(new Set(round.map((item) => item.id)).size).toBe(6)
+    for (const item of round) expect(items).toContain(item)
+    expect(round.filter((item) => item.isScam)).toHaveLength(4)
+    expect(round.filter((item) => !item.isScam)).toHaveLength(2)
+  })
+
+  it('does not mutate its input', () => {
+    const copy = [...items]
+    drawRound(items, seededRng(5))
+    expect(items).toEqual(copy)
   })
 })

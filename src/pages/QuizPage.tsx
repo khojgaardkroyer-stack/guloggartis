@@ -12,7 +12,7 @@ import {
 import { Link } from 'react-router'
 import QuizItem from '../components/quiz/QuizItem'
 import { items } from '../quiz/items'
-import { type Answer, isCorrect, resultText, scoreOf, shuffle } from '../quiz/quiz'
+import { type Answer, drawRound, isCorrect, resultText, scoreOf } from '../quiz/quiz'
 
 const PILL_BASE =
   'flex items-center justify-center gap-2 rounded-control-pill bg-button-tertiary-background py-2-5 text-lg font-semibold shadow-card-shadow transition hover:bg-state-hover-neutral'
@@ -45,7 +45,7 @@ function PillButton({ icon: Icon, label, onClick, disabled, compact, className =
 }
 
 function QuizPage() {
-  const [order, setOrder] = useState(() => shuffle(items))
+  const [order, setOrder] = useState(() => drawRound(items))
   const [index, setIndex] = useState(0)
   const [answers, setAnswers] = useState<Answer[]>([])
 
@@ -79,7 +79,7 @@ function QuizPage() {
   }
 
   function playAgain() {
-    setOrder(shuffle(items))
+    setOrder(drawRound(items))
     setAnswers([])
     setIndex(0)
   }
