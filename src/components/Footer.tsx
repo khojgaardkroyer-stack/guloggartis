@@ -54,8 +54,12 @@ const columns = [
   },
 ]
 
+type Props = {
+  onTiktokClick: () => void
+}
+
 // Built after the manual's desktop footer (Figma node 994:20204)
-function Footer() {
+function Footer({ onTiktokClick }: Props) {
   return (
     <footer className="relative border-t border-border-default bg-surface-gray-light px-4 pt-12 pb-24 text-text-primary sm:pb-12">
       <div className="mx-auto grid max-w-5xl gap-10 sm:grid-cols-2 lg:grid-cols-4">
@@ -66,6 +70,15 @@ function Footer() {
                 <a
                   href={GUL_OG_GRATIS_URL}
                   aria-label={name}
+                  // Easter egg: TikTok swaps the page background instead of leaving the page
+                  onClick={
+                    name === 'TikTok'
+                      ? (e) => {
+                          e.preventDefault()
+                          onTiktokClick()
+                        }
+                      : undefined
+                  }
                   className="flex items-center justify-center rounded-control-pill bg-button-tertiary-background p-2-5 text-icon-default transition hover:bg-state-hover-neutral"
                 >
                   <Icon aria-hidden="true" className="size-5" />
