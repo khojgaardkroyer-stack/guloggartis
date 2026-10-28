@@ -29,6 +29,24 @@ function hasWebGL(): boolean {
   return webglSupport
 }
 
+// Building the scene (extruding the G, prebuilding models, compiling shaders) takes a moment, so
+// it waits for idle time early in the run, long before the switch at SWITCH_METERS
+const IDLE_TIMEOUT_MS = 1000
+const IDLE_FALLBACK_MS = 300
+
+/**
+ * Runs `callback` when the browser is idle, or after a short delay where that isn't supported
+ * (eg. Safari). Returns a function that cancels it.
+ */
+function whenIdle(callback: () => void): () => void {
+  if (typeof window.requestIdleCallback === 'function') {
+    const id = window.requestIdleCallback(callback, { timeout: IDLE_TIMEOUT_MS })
+    return () => window.cancelIdleCallback(id)
+  }
+  const id = window.setTimeout(callback, IDLE_FALLBACK_MS)
+  return () => window.clearTimeout(id)
+}
+
 function prefersReducedMotion(): boolean {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
 }
@@ -49,6 +67,8 @@ export function useScene3D(
   const enabled = useRef(false)
   const lost = useRef(false)
   const mounted = useRef(false)
+  // Cancels the scene creation waiting for idle time, if any
+  const cancelCreate = useRef<(() => void) | null>(null)
   const onLostRef = useRef(onLost)
   useEffect(() => {
     onLostRef.current = onLost
@@ -71,6 +91,8 @@ export function useScene3D(
     }
     return () => {
       mounted.current = false
+      cancelCreate.current?.()
+      cancelCreate.current = null
       observer.disconnect()
       canvas?.removeEventListener('webglcontextlost', handleLost)
       scene.current?.dispose()
@@ -80,16 +102,21 @@ export function useScene3D(
 
   function prepare() {
     enabled.current = !lost.current && can3D({ webgl: hasWebGL(), reducedMotion: prefersReducedMotion() })
-    if (!enabled.current || scene.current) return
+    if (!enabled.current || scene.current || cancelCreate.current) return
     loadSceneModule().then((module) => {
-      const canvas = canvasRef.current
-      if (!module || !mounted.current || lost.current || scene.current || !canvas || !palette.current) return
-      try {
-        scene.current = module.createScene(canvas, palette.current)
-      } catch {
-        // No WebGL context after all: stay in 2D
-        lost.current = true
-      }
+      if (!module || !mounted.current || lost.current || scene.current || cancelCreate.current) return
+      // Until the scene exists, ready() returns null and the run stays in 2D
+      cancelCreate.current = whenIdle(() => {
+        cancelCreate.current = null
+        const canvas = canvasRef.current
+        if (!mounted.current || lost.current || scene.current || !canvas || !palette.current) return
+        try {
+          scene.current = module.createScene(canvas, palette.current)
+        } catch {
+          // No WebGL context after all: stay in 2D
+          lost.current = true
+        }
+      })
     })
   }
 
