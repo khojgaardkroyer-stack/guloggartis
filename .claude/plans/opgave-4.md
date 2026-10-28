@@ -244,3 +244,21 @@ In `src/game/view3d.test.ts` (Vitest, no WebGL needed):
 - New colours or tokens beyond reading existing theme variables.
 - Sound, shadow maps, textures beyond the shop sign, or a debug shortcut to start at 200 m.
 - Changes to `FoldableGame.tsx` (Opgave 8) beyond what the game needs to keep working inside it.
+
+## Follow-up after merge: better view ahead and lane-change grace (2026-10-28)
+The user found 3D hard: new obstacles spawned 96 % hidden in fog and were only clear ~0.35 s before reaching the G at
+top speed, and a lane change was a hit as soon as the G was 35 % into an occupied lane.
+- **Camera tilted down** from 13° to 18°, with the vertical field of view widened from 40° to 48° and the target a
+  little closer (`PLAYER_X + 196`), so the track up to the spawn point and the full height of vans and towers far
+  away stay in frame.
+- **Spawn further ahead in lane mode:** obstacles (and the shop at the goal) appear at `LANE_SPAWN_X = WIDTH + 250`
+  instead of `WIDTH`. Spawn timing is unchanged, so the rhythm and gaps stay the same; obstacles are just in view
+  about twice as long. 2D and the swing still spawn at `WIDTH`.
+- **Fog derived from the spawn point:** obstacles are just visible at `LANE_SPAWN_X` and fully visible 120 units
+  later (`FOG_FADE_DISTANCE`).
+- **`LANE_DROP_X` moved to -200**, so it stays behind the camera (now at about x = -141).
+- **Lane-change grace:** while the G glides between lanes (`laneX !== lane`) the sideways padding is
+  `LANE_CHANGE_SIDE_PAD = 12` instead of 5. Steering into an occupied lane is a hit only past halfway; dodging out
+  is free just before halfway. A G settled in a lane collides as before.
+- Tests: spawn x and shop start in both modes, grace states, a dodge that only survives with the grace, the G and
+  the spawn point inside the chase view, and the fog fade at the spawn point.

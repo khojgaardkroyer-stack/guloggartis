@@ -3,6 +3,7 @@ import {
   GROUND_Y,
   HEIGHT,
   LANE_DROP_X,
+  LANE_SPAWN_X,
   OBSTACLES,
   LANE_OBSTACLES,
   PLAYER_H,
@@ -76,13 +77,42 @@ describe('cameraPose', () => {
     expect(px).toBeLessThan(PLAYER_X)
     expect(pz).toBeCloseTo(0, 6)
     expect(py).toBeGreaterThan(PLAYER_H)
-    // A little above: a chase view, not a view from the top
-    expect(py).toBeLessThan(100)
     expect(tx).toBeGreaterThan(PLAYER_X + PLAYER_W)
     expect(ty).toBeLessThan(py)
     expect(pose.shift).toBe(0)
-    // Fog fades obstacles in around the spawn point
-    expect(pose.fogFar).toBeGreaterThan(WIDTH - px - 20)
+    // Tilted down about 18°: a chase view, not a view from the top
+    const tilt = (Math.atan2(py - ty, tx - px) * 180) / Math.PI
+    expect(tilt).toBeCloseTo(18, 6)
+  })
+
+  // Angle below the chase camera's view axis (degrees) and fog depth of a point at run position x, height y
+  function inChaseView(x: number, y: number) {
+    const pose = cameraPose(1)
+    const [px, py] = pose.position
+    const [tx, ty] = pose.target
+    const axis = Math.atan2(py - ty, tx - px)
+    const len = Math.hypot(tx - px, ty - py)
+    const depth = ((x - px) * (tx - px) + (y - py) * (ty - py)) / len
+    const fog = Math.min(Math.max((depth - pose.fogNear) / (pose.fogFar - pose.fogNear), 0), 1)
+    return { below: ((Math.atan2(py - y, x - px) - axis) * 180) / Math.PI, fog, halfFov: pose.fov / 2 }
+  }
+
+  it('shows the G and the track up to the lane-mode spawn point', () => {
+    for (const [x, y] of [
+      [PLAYER_X + PLAYER_W / 2, 0],
+      [PLAYER_X + PLAYER_W / 2, PLAYER_H],
+      [LANE_SPAWN_X, 0],
+    ]) {
+      const { below, halfFov } = inChaseView(x, y)
+      expect(Math.abs(below)).toBeLessThan(halfFov)
+    }
+  })
+
+  it('fades obstacles in out of the fog just after they spawn at LANE_SPAWN_X', () => {
+    expect(inChaseView(LANE_SPAWN_X, 0).fog).toBeGreaterThan(0.9)
+    expect(inChaseView(LANE_SPAWN_X, 0).fog).toBeLessThan(1)
+    // Fully visible well before reaching the G: at least 300 units of clear track ahead of it
+    expect(inChaseView(PLAYER_X + PLAYER_W + 300, 0).fog).toBe(0)
   })
 
   it('sees lane-mode obstacles leave behind it: LANE_DROP_X is behind the chase camera', () => {

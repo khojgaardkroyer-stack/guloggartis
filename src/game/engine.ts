@@ -26,10 +26,15 @@ export const LANE_W = 40 // distance between lane centres, in game units
 export const LANE_CHANGE_SECONDS = 0.15 // time to glide one lane sideways
 export const OBSTACLE_SIDE_W = 30 // an obstacle's width across the track, inside its lane
 const SIDE_PAD = 5 // forgiving sideways hitbox, like the 5 px padding in collides()
+// While the G glides between lanes it may graze an obstacle this much from the side
+export const LANE_CHANGE_SIDE_PAD = 12
+// In lane mode obstacles (and the shop) appear this far ahead instead of at WIDTH, so the 3D view
+// shows them longer. Spawn timing is unchanged, so the gaps between obstacles stay the same.
+export const LANE_SPAWN_X = WIDTH + 250
 // In lane mode an obstacle is kept until it is wholly behind this x (2D drops it at x = 0), so it
-// leaves the 3D view behind the chase camera (at about x = -97) instead of vanishing in sight.
+// leaves the 3D view behind the chase camera (at about x = -141) instead of vanishing in sight.
 // It is behind the G by then, so it can't collide. view3d.test.ts checks it is behind the camera.
-export const LANE_DROP_X = -150
+export const LANE_DROP_X = -200
 
 export type Status = 'ready' | 'running' | 'delivering' | 'over' | 'won'
 // van and tower only spawn in lane mode and are too tall to jump over
@@ -160,7 +165,8 @@ export function obstacleSideSpan(lane: ObstacleLane = 0): [number, number] {
 function sideOverlaps(state: GameState, o: Obstacle): boolean {
   const [pl, pr] = playerSideSpan(state.laneX)
   const [ol, or] = obstacleSideSpan(o.lane)
-  return pl + SIDE_PAD < or && pr - SIDE_PAD > ol
+  const pad = state.laneX === state.lane ? SIDE_PAD : LANE_CHANGE_SIDE_PAD
+  return pl + pad < or && pr - pad > ol
 }
 
 /**
@@ -241,7 +247,7 @@ export function step(state: GameState, dt: number, input: GameInput, rng: Rng = 
     if (points >= WIN_SCORE) {
       // Reached the goal: clear the road ahead and bring in the parcel shop
       g.obstacles = g.obstacles.filter((o) => o.x + o.w < g.px || (g.lanes && besideOutOfTheWay(g, o)))
-      g.shopX = WIDTH + 10
+      g.shopX = (g.lanes ? LANE_SPAWN_X : WIDTH) + 10
       g.parcel = 'carried'
       g.status = 'delivering'
       // The shop sits across the middle of the track: steer back to the middle lane
@@ -250,7 +256,7 @@ export function step(state: GameState, dt: number, input: GameInput, rng: Rng = 
       g.nextObstacleIn -= dt
       if (g.nextObstacleIn <= 0) {
         const o: Obstacle = g.lanes
-          ? { x: WIDTH, ...randomLaneObstacle(points, rng) }
+          ? { x: LANE_SPAWN_X, ...randomLaneObstacle(points, rng) }
           : { x: WIDTH, lane: 0, ...randomObstacle(points, rng) }
         g.obstacles = [...g.obstacles, o]
         // Always leave enough room to land before the next obstacle

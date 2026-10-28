@@ -3,6 +3,7 @@
 import {
   GROUND_Y,
   HEIGHT,
+  LANE_SPAWN_X,
   PLAYER_H,
   PLAYER_W,
   PLAYER_X,
@@ -97,20 +98,32 @@ const SIDE = {
   fogFar: 8000,
 }
 
-// Chase view (t = 1): behind and above the G, high enough to see the lane ahead over it,
-// looking down the track to the spawn point
-const CHASE_DISTANCE = 360
-const CHASE_FOV = 40
+// Chase view (t = 1): behind and above the G, tilted down so the track ahead fills the view,
+// looking down the track to the lane-mode spawn point
+const CHASE_DISTANCE = 380
+const CHASE_FOV = 48
+const CHASE_TARGET_X = PLAYER_X + 196
+const CHASE_ELEVATION = (18 * Math.PI) / 180
+// Obstacles fade in out of the white over this distance after they spawn at LANE_SPAWN_X
+const FOG_FADE_DISTANCE = 120
+
+/** Fog depth (distance along the chase camera's view axis) of a point on the ground at run position x */
+function chaseDepth(x: number): number {
+  const cameraX = CHASE_TARGET_X - CHASE_DISTANCE * Math.cos(CHASE_ELEVATION)
+  const cameraY = CHASE_DISTANCE * Math.sin(CHASE_ELEVATION)
+  return (x - cameraX) * Math.cos(CHASE_ELEVATION) + cameraY * Math.sin(CHASE_ELEVATION)
+}
+
 const CHASE = {
-  target: [PLAYER_X + 230, 0, 0] as const,
+  target: [CHASE_TARGET_X, 0, 0] as const,
   fov: CHASE_FOV,
   azimuth: -Math.PI / 2,
-  elevation: (13 * Math.PI) / 180,
+  elevation: CHASE_ELEVATION,
   viewHeight: 2 * CHASE_DISTANCE * Math.tan((CHASE_FOV * Math.PI) / 360),
   shift: 0,
-  // Obstacles fade in out of the white from the spawn point (x = WIDTH) on
-  fogNear: 300,
-  fogFar: 470,
+  // Just visible at the spawn point, fully visible FOG_FADE_DISTANCE later
+  fogNear: chaseDepth(LANE_SPAWN_X - FOG_FADE_DISTANCE),
+  fogFar: chaseDepth(LANE_SPAWN_X) + 10,
 }
 
 /** Share of the G's jump height the chase camera rises with, so a high jump stays in view */

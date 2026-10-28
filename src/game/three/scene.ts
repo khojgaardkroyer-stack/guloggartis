@@ -36,6 +36,7 @@ import playerSvg from '../../assets/g-player.svg?raw'
 import {
   LANES,
   LANE_OBSTACLES,
+  LANE_SPAWN_X,
   LANE_W,
   OBSTACLES,
   PLAYER_H,
@@ -45,7 +46,6 @@ import {
   SHOP_DOOR_X,
   SHOP_H,
   SHOP_W,
-  WIDTH,
   type GameState,
   type Obstacle,
 } from '../engine'
@@ -486,8 +486,8 @@ export function createScene(canvas: HTMLCanvasElement, palette: GamePalette): Sc
 
     for (const pool of pools.values()) pool.used = 0
     for (const o of state.obstacles) {
-      // Only what can be in view: spawned at WIDTH, gone behind the G
-      if (o.x > WIDTH + 10 || o.x + o.w < TRACK_START) continue
+      // Only what can be in view: spawned at LANE_SPAWN_X (WIDTH before lane mode), gone behind the G
+      if (o.x > LANE_SPAWN_X + 10 || o.x + o.w < TRACK_START) continue
       const b = obstacleBox(o)
       const model = obstacleModel(o, b)
       model.visible = true
