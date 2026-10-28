@@ -1,5 +1,5 @@
 import type { IconType } from 'react-icons'
-import { PiBicycle, PiDeviceMobile } from 'react-icons/pi'
+import { PiArmchair, PiBicycle, PiDeviceMobile, PiTelevisionSimple } from 'react-icons/pi'
 
 type ItemBase = {
   id: string
@@ -106,5 +106,79 @@ export const items: QuizItem[] = [
     isScam: false,
     explanation:
       'Her er intet at være bange for. Køber vil bruge SikkerHandel, så pengene står sikkert, indtil hun har fået tæppet.',
+  },
+  {
+    id: 'overpayment',
+    kind: 'chat',
+    situation: 'Du sælger din cykelhjelm.',
+    sender: 'Peter_H',
+    text: 'Ups, jeg kom til at betale 2.500 kr. i stedet for 250 kr. Kan du overføre de 2.250 kr. tilbage på MobilePay?',
+    isScam: true,
+    warning: 'overføre de 2.250 kr. tilbage',
+    warningIn: 'text',
+    explanation:
+      'Der er ingen overbetaling. Svindleren håber, at du sender dine egne penge. Med SikkerHandel får du udbetalt præcis det, varen koster, og du skal aldrig sende penge tilbage.',
+  },
+  {
+    id: 'sms-code',
+    kind: 'chat',
+    situation: 'Du sælger dit brætspil.',
+    sender: 'Jonas_77',
+    text: 'Jeg har sendt dig en sms med en kode. Send mig lige koden, så jeg kan bekræfte betalingen.',
+    isScam: true,
+    warning: 'Send mig lige koden',
+    warningIn: 'text',
+    explanation:
+      'Koden er kun til dig, og med den kan svindleren komme ind på din konto. Med SikkerHandel skal du aldrig give en kode til køber, og betalingen bekræftes inde på Gul&Gratis.',
+  },
+  {
+    id: 'move-to-whatsapp',
+    kind: 'chat',
+    situation: 'Du vil købe en jakke.',
+    sender: 'Camilla_B',
+    text: 'Skriv dit nummer, så tager vi resten på WhatsApp. Det er nemmere.',
+    isScam: true,
+    warning: 'tager vi resten på WhatsApp',
+    warningIn: 'text',
+    explanation:
+      'Flytter I handlen væk fra Gul&Gratis, mister du beskyttelsen. Med SikkerHandel foregår både chat og betaling på Gul&Gratis, så pengene står sikkert, indtil du har fået jakken.',
+  },
+  {
+    id: 'bank-transfer-tv',
+    kind: 'ad',
+    situation: 'Du leder efter et fjernsyn.',
+    icon: PiTelevisionSimple,
+    title: 'Smart-tv, 65 tommer, ny i æsken',
+    price: '1.200 kr.',
+    place: 'Aalborg',
+    description: 'Betaling kun via bankoverførsel. Jeg sender fra Spanien.',
+    isScam: true,
+    warning: 'Betaling kun via bankoverførsel',
+    warningIn: 'description',
+    explanation:
+      "Kræver sælger bankoverførsel, kan du ikke få pengene tilbage, hvis tv'et aldrig kommer. Med SikkerHandel står pengene på en sikret handelskonto, indtil du har godkendt varen.",
+  },
+  {
+    id: 'velour-armchair',
+    kind: 'ad',
+    situation: 'Du leder efter en lænestol.',
+    icon: PiArmchair,
+    title: 'Lænestol i velour',
+    price: '600 kr.',
+    place: 'Aarhus',
+    description: 'Lidt slidt på armlænene. Kan sendes med SikkerHandel eller hentes.',
+    isScam: false,
+    explanation:
+      'Alt ser fint ud: en rimelig pris, en ærlig beskrivelse af slid, og sælger tilbyder SikkerHandel.',
+  },
+  {
+    id: 'running-shoes-buyer',
+    kind: 'chat',
+    situation: 'Du sælger dine løbesko.',
+    sender: 'Bo_Hansen',
+    text: 'Har du et billede af sålerne? Hvis de ser fine ud, køber jeg dem gerne med SikkerHandel.',
+    isScam: false,
+    explanation:
+      'Helt i orden. Køber stiller et fornuftigt spørgsmål og vil handle med SikkerHandel, så du først sender, når pengene står sikkert.',
   },
 ]
