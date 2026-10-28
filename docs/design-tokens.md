@@ -27,7 +27,7 @@ The SPA's Tailwind theme (`@theme` in `src/index.css`) comes from Gul&Gratis' de
 | `--color-text-green` | `#089855` | `color/text/green` (→ `color/foundation/palette/green/800`) | Game win message; canvas tick mark |
 | `--color-icon-default` | `#2e2e2e` | `color/icon/default` (→ `color/foundation/neutral/900`) | Phosphor icons (section icons, FAQ, close, fullscreen, socials) |
 | `--color-surface-white` | `#ffffff` | `color/surface/white` (→ `color/foundation/neutral/0`) | Section cards, FAQ drawer, game frame, message pill; canvas white (cone stripe, envelope, sign text) |
-| `--color-surface-gray-light` | `#f4f4f4` | `color/surface/gray-light` (→ `color/foundation/neutral/100`) | Footer background (as in the Figma footer) |
+| `--color-surface-gray-light` | `#f4f4f4` | `color/surface/gray-light` (→ `color/foundation/neutral/100`) | Footer background (as in the Figma footer); the track in the game's 3D view |
 | `--color-surface-yellow-light` | `#fcf6b1` | `color/surface/yellow-light` (→ `color/foundation/palette/yellow/300`) | Round icon backgrounds in sections and FAQ items |
 | `--color-surface-overlay-gray` | `#dcdcdcb2` | `color/surface/overlay/gray` | Backdrop behind the FAQ drawer (the Figma modal overlay) |
 | `--color-button-tertiary-background` | `#ffffff` | `color/button/tertiary/background` | White buttons: "Kom i gang", FAQ button, footer social icons |
@@ -37,13 +37,13 @@ The SPA's Tailwind theme (`@theme` in `src/index.css`) comes from Gul&Gratis' de
 | `--color-border-divider` | `#d0d4d7` | `color/border/divider` (→ `color/foundation/neutral/300`) | Lines between FAQ items |
 | `--color-border-focus` | `#2e2e2e` | `color/border/focus` (→ `color/foundation/neutral/900`) | Focus outline on the game canvas |
 
-### Colours: game canvas (`src/game/draw.ts`)
+### Colours: game canvas (`src/game/draw.ts`, and the 3D view in `src/game/three/scene.ts`)
 
 | Tailwind token | Value | Figma variable | Used for |
 | --- | --- | --- | --- |
 | `--color-brand-gray-dark` | `#2e2e2e` | `color/brand/gray-dark` (→ `color/foundation/neutral/900`) | Ground line, outlines, shop sign and door |
 | `--color-brand-blue-light` | `#d7f1f6` | `color/brand/blue-light` (→ `color/foundation/palette/blue/100`) | Shop window |
-| `--color-foundation-neutral-550` | `#969696` | `color/foundation/neutral/550` | Ground dashes |
+| `--color-foundation-neutral-550` | `#969696` | `color/foundation/neutral/550` | Ground dashes; lane dividers in 3D |
 | `--color-foundation-palette-yellow-700` | `#e8b53e` | `color/foundation/palette/yellow/700` | Parcel (cardboard) |
 | `--color-foundation-palette-rust-500` | `#cc6119` | `color/foundation/palette/rust/500` | Parcel tape |
 | `--color-foundation-palette-rust-900` | `#884111` | `color/foundation/palette/rust/900` | Parcel outline |
