@@ -3,9 +3,12 @@ import {
   GROUND_Y,
   LANE_CHANGE_SECONDS,
   PLAYER_H,
+  PLAYER_W,
   PLAYER_X,
   WIN_SCORE,
   enterLanes,
+  obstacleSideSpan,
+  playerSideSpan,
   startGame,
   step,
   type GameInput,
@@ -250,5 +253,65 @@ describe('winning in lane mode', () => {
     expect(s.status).toBe('won')
     expect(s.parcel).toBe('delivered')
     expect(s.laneX).toBe(0)
+  })
+
+  // The G's box and an obstacle's box overlap in all three directions (no forgiving padding)
+  function touches(state: GameState, o: Obstacle): boolean {
+    const [pl, pr] = playerSideSpan(state.laneX)
+    const [ol, or] = obstacleSideSpan(o.lane)
+    const playerBottom = GROUND_Y - state.y
+    return (
+      state.px < o.x + o.w &&
+      state.px + PLAYER_W > o.x &&
+      playerBottom - PLAYER_H < o.lift + o.h &&
+      playerBottom > o.lift &&
+      pl < or &&
+      pr > ol
+    )
+  }
+
+  it('keeps obstacles beside the G in lanes off its way to the middle, and clears everything ahead', () => {
+    const besideLeft = placed(VAN, -1, PLAYER_X - 10)
+    const behind = placed(PARCEL, 1, PLAYER_X - 30)
+    let s = laneGame({
+      lane: 1,
+      laneX: 1,
+      distance: WIN_SCORE * 20 - 1,
+      obstacles: [
+        besideLeft,
+        behind,
+        placed(VAN, 0, PLAYER_X), // beside, but in the middle lane the G steers back to
+        placed(TOWER, 1, PLAYER_X + 4), // beside, in the G's own lane
+        placed(ROW, 'all', PLAYER_X), // across every lane
+        placed(PARCEL, -1, 200), // ahead in a free lane
+        placed(VAN, 1, 120), // ahead in the G's lane
+      ],
+    })
+    s = step(s, DT, NO_INPUT, noRng)
+    expect(s.status).toBe('delivering')
+    expect(s.obstacles.map((o) => [o.kind, o.lane])).toEqual([
+      ['van', -1],
+      ['parcel', 1],
+    ])
+
+    // Nothing kept touches the G on its way to the middle lane or the shop, and it all scrolls away
+    for (let i = 0; i < 60 * 30 && s.status === 'delivering'; i++) {
+      s = step(s, DT, NO_INPUT, noRng)
+      for (const o of s.obstacles) {
+        expect(touches(s, o)).toBe(false)
+        if (s.shopX !== null) expect(o.x + o.w).toBeLessThan(s.shopX)
+      }
+    }
+    expect(s.status).toBe('won')
+    expect(s.obstacles).toEqual([])
+  })
+
+  it('keeps obstacles beside the G in both outer lanes when it is in the middle', () => {
+    let s = laneGame({
+      distance: WIN_SCORE * 20 - 1,
+      obstacles: [placed(VAN, -1, PLAYER_X), placed(TOWER, 1, PLAYER_X), placed(PARCEL, 0, PLAYER_X + 10)],
+    })
+    s = step(s, DT, NO_INPUT, noRng)
+    expect(s.obstacles.map((o) => o.kind)).toEqual(['van', 'tower'])
   })
 })

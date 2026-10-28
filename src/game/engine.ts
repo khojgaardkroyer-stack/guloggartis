@@ -159,6 +159,19 @@ function sideOverlaps(state: GameState, o: Obstacle): boolean {
   return pl + SIDE_PAD < or && pr - SIDE_PAD > ol
 }
 
+/**
+ * In lane mode at the goal: an obstacle beside the G (not ahead of it) in a lane that the G
+ * doesn't cross on its way back to the middle lane. It can't touch the G or the shop, so it is
+ * left to scroll away instead of vanishing next to the camera.
+ */
+function besideOutOfTheWay(state: GameState, o: Obstacle): boolean {
+  if (o.x >= state.px + PLAYER_W) return false
+  const [left] = playerSideSpan(Math.min(state.laneX, 0))
+  const [, right] = playerSideSpan(Math.max(state.laneX, 0))
+  const [ol, or] = obstacleSideSpan(o.lane)
+  return or <= left || ol >= right
+}
+
 export function isOnGround(state: GameState): boolean {
   return state.y >= GROUND_Y - PLAYER_H - 0.5
 }
@@ -222,7 +235,7 @@ export function step(state: GameState, dt: number, input: GameInput, rng: Rng = 
 
     if (points >= WIN_SCORE) {
       // Reached the goal: clear the road ahead and bring in the parcel shop
-      g.obstacles = g.obstacles.filter((o) => o.x + o.w < g.px)
+      g.obstacles = g.obstacles.filter((o) => o.x + o.w < g.px || (g.lanes && besideOutOfTheWay(g, o)))
       g.shopX = WIDTH + 10
       g.parcel = 'carried'
       g.status = 'delivering'
