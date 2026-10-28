@@ -107,10 +107,16 @@ function GGame({ id, onClose }: GGameProps) {
     setView('2d')
     setLanes(false)
     const g = game.current
-    if (g.lanes && (g.status === 'running' || g.status === 'delivering')) {
+    if (g.lanes) {
+      const ended = g.status === 'running' || g.status === 'delivering'
       if (g.status === 'running') recordHighScore(g.score)
-      game.current = { ...g, status: 'over' }
-      setStatus('over')
+      if (ended) setStatus('over')
+      // The 2D board never shows lanes: keep only what lies in the G's lane and 2D can draw
+      const lane = Math.round(g.laneX)
+      const obstacles = g.obstacles.filter(
+        (o) => (o.lane === 'all' || o.lane === lane) && o.kind !== 'van' && o.kind !== 'tower',
+      )
+      game.current = { ...g, status: ended ? 'over' : g.status, lanes: false, lane: 0, laneX: 0, obstacles }
     }
     draw()
   }
