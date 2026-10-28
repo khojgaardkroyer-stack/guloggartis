@@ -124,6 +124,15 @@ describe('a press in lane mode', () => {
     expect(play(W / 2, [[0, 0, 100], [0, -50, 200]])).toEqual(['jump'])
   })
 
+  it('a held press that has jumped never steers, even if it then swipes sideways', () => {
+    for (const sign of [-1, 1]) {
+      expect(play(W / 2, [[0, 0, 100], [sign * 20, 0, 150], [sign * 60, 0, 250], [sign * 80, 5, 300]])).toEqual([
+        'jump',
+      ])
+      expect(play(W / 2, [[2, 0, TAP_JUMP_DELAY_MS], [sign * 45, 0, 200]])).toEqual(['jump'])
+    }
+  })
+
   it('a press at the side steers on release and never jumps while held', () => {
     expect(play(10, [[0, 0, 200], [1, 1, 300]])).toEqual(['left'])
     expect(play(W - 10, [[0, 0, 200], [0, 2, 300]])).toEqual(['right'])

@@ -81,15 +81,16 @@ export function holdPress(press: Press, dx: number, elapsedMs: number): { press:
 }
 
 /**
- * What a press does when it is released after moving `dx`/`dy` px (y down). A sideways swipe
- * steers even after a held jump; a press never jumps twice, and a swipe never jumps as a tap.
+ * What a press does when it is released after moving `dx`/`dy` px (y down). A press that has
+ * already jumped while held does nothing more (so one gesture never both jumps and steers), and a
+ * swipe never jumps as a tap.
  */
 export function endPress(held: Press, dx: number, dy: number): Gesture | null {
+  if (held.jumped) return null
   const { press } = holdPress(held, dx, 0)
   const swipe = swipeGesture(dx, dy)
-  if (swipe === 'left' || swipe === 'right') return swipe
-  if (swipe === 'jump') return press.jumped ? null : 'jump'
-  if (press.swiped || press.jumped) return null
+  if (swipe) return swipe
+  if (press.swiped) return null
   const zone = tapZone(press.startX, press.width)
   // In the middle only sideways movement counts against a tap: that is what makes it a swipe
   if (zone === 'jump') return 'jump'
