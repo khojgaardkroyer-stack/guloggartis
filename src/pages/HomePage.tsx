@@ -1,4 +1,5 @@
-import { PiStorefront } from 'react-icons/pi'
+import { PiShieldWarning, PiStorefront } from 'react-icons/pi'
+import { Link } from 'react-router'
 import FaqDrawer from '../components/FaqDrawer'
 import FoldableGame from '../components/FoldableGame'
 import TextSection from '../components/TextSection'
@@ -38,6 +39,12 @@ function HomePage() {
           >
             <PiStorefront aria-hidden="true" className="size-8 text-icon-default" /> Kom i gang
           </a>
+          <Link
+            to="/spot-svindlen"
+            className="flex items-center gap-2 rounded-control-pill bg-button-tertiary-background px-5 py-2-5 text-lg font-semibold shadow-card-shadow transition hover:bg-state-hover-neutral"
+          >
+            <PiShieldWarning aria-hidden="true" className="size-8 text-icon-default" /> Spot svindlen
+          </Link>
         </div>
       </div>
       <div className="relative mt-12 flex justify-center sm:justify-end">
