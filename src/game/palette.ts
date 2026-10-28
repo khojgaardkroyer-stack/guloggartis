@@ -15,6 +15,7 @@ export const PALETTE_VARS = {
   shop: '--color-page-background',
   shopWindow: '--color-brand-blue-light',
   tick: '--color-text-green',
+  track: '--color-surface-gray-light',
 } as const
 
 export type GamePalette = Record<keyof typeof PALETTE_VARS, string>
