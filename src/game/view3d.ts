@@ -98,18 +98,20 @@ const SIDE = {
   fogFar: 8000,
 }
 
-// Chase view (t = 1): behind and a little above the G, looking down the track to the spawn point
-const CHASE_DISTANCE = 280
+// Chase view (t = 1): behind and above the G, high enough to see the lane ahead over it,
+// looking down the track to the spawn point
+const CHASE_DISTANCE = 360
+const CHASE_FOV = 40
 const CHASE = {
-  target: [PLAYER_X + 180, 8, 0] as const,
-  fov: 42,
+  target: [PLAYER_X + 230, 0, 0] as const,
+  fov: CHASE_FOV,
   azimuth: -Math.PI / 2,
-  elevation: (8 * Math.PI) / 180,
-  viewHeight: 2 * CHASE_DISTANCE * Math.tan((42 * Math.PI) / 360),
+  elevation: (13 * Math.PI) / 180,
+  viewHeight: 2 * CHASE_DISTANCE * Math.tan((CHASE_FOV * Math.PI) / 360),
   shift: 0,
   // Obstacles fade in out of the white from the spawn point (x = WIDTH) on
-  fogNear: 250,
-  fogFar: 440,
+  fogNear: 300,
+  fogFar: 470,
 }
 
 export function cameraPose(t: number): CameraPose {

@@ -75,8 +75,8 @@ describe('cameraPose', () => {
     expect(px).toBeLessThan(PLAYER_X)
     expect(pz).toBeCloseTo(0, 6)
     expect(py).toBeGreaterThan(PLAYER_H)
-    // Low enough that a high envelope (lift 44) is seen flying over the G
-    expect(py).toBeLessThan(60)
+    // A little above: a chase view, not a view from the top
+    expect(py).toBeLessThan(100)
     expect(tx).toBeGreaterThan(PLAYER_X + PLAYER_W)
     expect(ty).toBeLessThan(py)
     expect(pose.shift).toBe(0)
