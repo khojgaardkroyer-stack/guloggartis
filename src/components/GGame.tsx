@@ -15,7 +15,7 @@ import {
   step,
   type Status,
 } from '../game/engine'
-import { classifyGesture, tapZone } from '../game/gesture'
+import { endPress, holdPress, startPress, type Press } from '../game/gesture'
 import { FADE_IN_MS, SWING_SECONDS, SWITCH_METERS, swingTimeScale } from '../game/view3d'
 import { useScene3D } from './useScene3D'
 
@@ -40,8 +40,8 @@ function saveHighScore(score: number) {
 // 2d: the 2D board. swing: the camera swings round behind the G. 3d: the chase view, in lanes.
 type View = '2d' | 'swing' | '3d'
 
-// A press on the board in lane mode, read as a tap or a swipe when it ends
-type Press = { id: number; x: number; y: number; startX: number; width: number; jumped: boolean }
+// A press on the board in lane mode: where and when it started, how far it has moved sideways
+type Pointer = { id: number; x: number; y: number; dx: number; downAt: number; press: Press }
 
 const STEER_KEYS: Record<string, -1 | 1> = { ArrowLeft: -1, a: -1, A: -1, ArrowRight: 1, d: 1, D: 1 }
 const JUMP_KEYS = new Set([' ', 'ArrowUp', 'w', 'W'])
@@ -68,7 +68,7 @@ function GGame({ id, onClose }: GGameProps) {
   // Swing progress the 3D view is drawn at: 0..1 during the swing, 1 in 3D
   const swing = useRef(0)
   const pendingSteer = useRef<(-1 | 1)[]>([])
-  const press = useRef<Press | null>(null)
+  const press = useRef<Pointer | null>(null)
   const cleared2D = useRef(false)
 
   // Game state lives in a ref so the animation loop doesn't re-render React
@@ -222,6 +222,8 @@ function GGame({ id, onClose }: GGameProps) {
         swingStart.current = now
         setView('swing')
       }
+      // A press held still in the middle jumps without waiting for the release
+      if (press.current) holdPointer(press.current, now)
       // The swing runs in real time while the game runs in slow motion
       let timeScale = 1
       if (view.current === 'swing') {
@@ -282,17 +284,34 @@ function GGame({ id, onClose }: GGameProps) {
       handleInput()
       return
     }
-    // In lanes the gesture is read on pointerup, but a tap in the middle jumps right away
+    // In lanes a press is read as it moves and when it ends, so a swipe never also jumps
     const rect = e.currentTarget.getBoundingClientRect()
-    const startX = e.clientX - rect.left
-    const jumped = tapZone(startX, rect.width) === 'jump'
-    if (jumped) pendingJump.current = true
     try {
       e.currentTarget.setPointerCapture(e.pointerId)
     } catch {
       // Capture is only a nicety: the swipe still counts if it ends on the board
     }
-    press.current = { id: e.pointerId, x: e.clientX, y: e.clientY, startX, width: rect.width, jumped }
+    press.current = {
+      id: e.pointerId,
+      x: e.clientX,
+      y: e.clientY,
+      dx: 0,
+      downAt: performance.now(),
+      press: startPress(e.clientX - rect.left, rect.width),
+    }
+  }
+
+  function holdPointer(p: Pointer, now: number) {
+    const held = holdPress(p.press, p.dx, now - p.downAt)
+    p.press = held.press
+    if (held.jump && canSteer()) pendingJump.current = true
+  }
+
+  function handlePointerMove(e: PointerEvent<HTMLCanvasElement>) {
+    const p = press.current
+    if (!p || p.id !== e.pointerId) return
+    p.dx = e.clientX - p.x
+    holdPointer(p, performance.now())
   }
 
   function handlePointerUp(e: PointerEvent<HTMLCanvasElement>) {
@@ -300,11 +319,9 @@ function GGame({ id, onClose }: GGameProps) {
     if (!p || p.id !== e.pointerId) return
     press.current = null
     if (!canSteer()) return
-    const dx = e.clientX - p.x
-    const dy = e.clientY - p.y
-    const gesture = classifyGesture({ dx, dy, startX: p.startX, width: p.width })
+    const gesture = endPress(p.press, e.clientX - p.x, e.clientY - p.y)
     if (gesture === 'left' || gesture === 'right') pendingSteer.current.push(gesture === 'left' ? -1 : 1)
-    else if (gesture === 'jump' && !p.jumped) pendingJump.current = true
+    else if (gesture === 'jump') pendingJump.current = true
   }
 
   // Native fullscreen where supported (not on iPhone); otherwise cover the window with CSS
@@ -445,6 +462,7 @@ function GGame({ id, onClose }: GGameProps) {
             tabIndex={0}
             aria-label="Spillepladen. Tryk mellemrum, pil op eller på skærmen for at hoppe."
             onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerCancel={() => {
               press.current = null
