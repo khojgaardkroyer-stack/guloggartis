@@ -12,6 +12,26 @@ export function shuffle<T>(list: readonly T[], rng: () => number = Math.random):
   return result
 }
 
+/** How many scams and fine items one round draws from the pool. */
+export const ROUND_SCAMS = 4
+export const ROUND_FINE = 2
+
+/**
+ * Draws one round from the pool: 4 random scams and 2 random fine items, in random order.
+ * Returns a new array; the input is left untouched.
+ */
+export function drawRound(list: readonly QuizItem[], rng: () => number = Math.random): QuizItem[] {
+  const scams = shuffle(
+    list.filter((item) => item.isScam),
+    rng,
+  ).slice(0, ROUND_SCAMS)
+  const fine = shuffle(
+    list.filter((item) => !item.isScam),
+    rng,
+  ).slice(0, ROUND_FINE)
+  return shuffle([...scams, ...fine], rng)
+}
+
 export function isCorrect(item: QuizItem, answer: Answer): boolean {
   return item.isScam === (answer === 'scam')
 }
