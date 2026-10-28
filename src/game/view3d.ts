@@ -68,10 +68,9 @@ export function boxesOverlap(a: WorldBox, b: WorldBox): boolean {
 }
 
 /**
- * The camera at swing progress `t` (clamped to 0..1), for a G at PLAYER_X; the scene shifts it along
- * the run by `state.px - PLAYER_X`. `fov` is the vertical field of view in degrees, and `shift` moves
- * the view window up by that fraction of its half-height (a lens shift), so the side view can look
- * straight across while the ground sits low on the board as in 2D.
+ * A camera pose: `fov` is the vertical field of view in degrees, and `shift` moves the view window
+ * up by that fraction of its half-height (a lens shift), so the side view can look straight across
+ * while the ground sits low on the board as in 2D.
  */
 export type CameraPose = {
   position: [number, number, number]
@@ -114,8 +113,17 @@ const CHASE = {
   fogFar: 470,
 }
 
-export function cameraPose(t: number): CameraPose {
+/** Share of the G's jump height the chase camera rises with, so a high jump stays in view */
+export const CHASE_JUMP_FOLLOW = 0.5
+
+/**
+ * The camera at swing progress `t` (clamped to 0..1), for a G at PLAYER_X that is `jumpHeight`
+ * above the ground; the scene shifts it along the run by `state.px - PLAYER_X`. The side view
+ * (t = 0) doesn't follow jumps, so it always lines up with the 2D board.
+ */
+export function cameraPose(t: number, jumpHeight = 0): CameraPose {
   const e = easeInOut(t)
+  const rise = CHASE_JUMP_FOLLOW * jumpHeight * e
   const fov = lerp(SIDE.fov, CHASE.fov, e)
   const viewHeight = lerp(SIDE.viewHeight, CHASE.viewHeight, e)
   const distance = viewHeight / 2 / Math.tan((fov * Math.PI) / 360)
@@ -123,7 +131,7 @@ export function cameraPose(t: number): CameraPose {
   const elevation = lerp(SIDE.elevation, CHASE.elevation, e)
   const target: [number, number, number] = [
     lerp(SIDE.target[0], CHASE.target[0], e),
-    lerp(SIDE.target[1], CHASE.target[1], e),
+    lerp(SIDE.target[1], CHASE.target[1], e) + rise,
     lerp(SIDE.target[2], CHASE.target[2], e),
   ]
   // Direction from the target to the camera: +z (side view) swings round to -x (behind the G)

@@ -84,6 +84,14 @@ describe('cameraPose', () => {
     expect(pose.fogFar).toBeGreaterThan(WIDTH - px - 20)
   })
 
+  it('rises with a jump in the chase view, but not in the side view', () => {
+    expect(cameraPose(0, 80)).toEqual(cameraPose(0))
+    const ground = cameraPose(1)
+    const jumping = cameraPose(1, 80)
+    expect(jumping.position[1]).toBeGreaterThan(ground.position[1])
+    expect(jumping.target[1] - ground.target[1]).toBeCloseTo(jumping.position[1] - ground.position[1], 6)
+  })
+
   it('clamps t to 0..1', () => {
     expect(cameraPose(-1)).toEqual(cameraPose(0))
     expect(cameraPose(2)).toEqual(cameraPose(1))

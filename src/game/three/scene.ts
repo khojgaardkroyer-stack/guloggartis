@@ -451,7 +451,8 @@ export function createScene(canvas: HTMLCanvasElement, palette: GamePalette): Sc
     if (!width || !height) return
 
     // Camera, following the G along the run
-    const pose = cameraPose(swing)
+    const g = playerBox(state)
+    const pose = cameraPose(swing, g.y[0])
     const dx = state.px - PLAYER_X
     camera.position.set(pose.position[0] + dx, pose.position[1], pose.position[2])
     camera.up.set(0, 1, 0)
@@ -482,7 +483,6 @@ export function createScene(canvas: HTMLCanvasElement, palette: GamePalette): Sc
       for (let i = pool.used; i < pool.models.length; i++) pool.models[i].visible = false
     }
 
-    const g = playerBox(state)
     const centreX = (g.x[0] + g.x[1]) / 2
     const centreZ = (g.z[0] + g.z[1]) / 2
     player.position.set(centreX, (g.y[0] + g.y[1]) / 2, centreZ)
@@ -508,8 +508,8 @@ export function createScene(canvas: HTMLCanvasElement, palette: GamePalette): Sc
   }
 
   resize()
-  // Compile every shader now (in parallel where the browser can), not on the switch at 200 m
-  renderer.compileAsync(scene, camera).catch(() => {})
+  // Compile every shader now, while the run is young, not on the switch at 200 m
+  renderer.compile(scene, camera)
 
   return {
     render,
