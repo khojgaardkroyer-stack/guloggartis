@@ -16,7 +16,7 @@ import {
   type Status,
 } from '../game/engine'
 import { endPress, holdPress, startPress, type Press } from '../game/gesture'
-import { FADE_IN_MS, SWING_SECONDS, SWITCH_METERS, swingTimeScale } from '../game/view3d'
+import { FADE_IN_MS, SWING_SECONDS, SWITCH_METERS, quietForSwitch, swingTimeScale } from '../game/view3d'
 import { useScene3D } from './useScene3D'
 
 const HIGH_SCORE_KEY = 'ggame-highscore'
@@ -224,6 +224,10 @@ function GGame({ id, onClose }: GGameProps) {
       last = now
       const prev = game.current
 
+      // Once this run is sure to switch to 3D, keep the track clear around the switch
+      if (view.current === '2d' && prev.status === 'running' && !prev.quiet && scene3d.ready()) {
+        game.current = quietForSwitch(prev)
+      }
       // At SWITCH_METERS, or as soon as the 3D code has loaded after that, swing into 3D
       const due = prev.status === 'running' && prev.score >= SWITCH_METERS
       if (view.current === '2d' && due && scene3d.ready()) {

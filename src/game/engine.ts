@@ -12,6 +12,7 @@ export const START_SPEED = 260
 export const SPEED_GAIN = 8 // px/s added per second
 export const MAX_SPEED = 650
 export const WIN_SCORE = 2000
+export const UNITS_PER_POINT = 20 // 1 point (1 meter) per this much distance
 
 export const SHOP_W = 120
 export const SHOP_H = 78
@@ -78,6 +79,8 @@ export type GameState = {
   lane: Lane
   /** The G's actual sideways position in lane units; glides towards `lane` */
   laneX: number
+  /** No new obstacles while the score is in [from, until), eg. around the switch to 3D */
+  quiet: { from: number; until: number } | null
 }
 
 // New obstacle types unlock as the score climbs
@@ -137,6 +140,7 @@ export function newGame(): GameState {
     lanes: false,
     lane: 0,
     laneX: 0,
+    quiet: null,
   }
 }
 
@@ -241,7 +245,7 @@ export function step(state: GameState, dt: number, input: GameInput, rng: Rng = 
   if (g.shopX !== null) g.shopX -= move
 
   if (!delivering) {
-    const points = Math.min(Math.floor(g.distance / 20), WIN_SCORE)
+    const points = Math.min(Math.floor(g.distance / UNITS_PER_POINT), WIN_SCORE)
     g.score = points
 
     if (points >= WIN_SCORE) {
@@ -254,7 +258,8 @@ export function step(state: GameState, dt: number, input: GameInput, rng: Rng = 
       if (g.lanes) g.lane = 0
     } else {
       g.nextObstacleIn -= dt
-      if (g.nextObstacleIn <= 0) {
+      const quiet = g.quiet !== null && points >= g.quiet.from && points < g.quiet.until
+      if (g.nextObstacleIn <= 0 && !quiet) {
         const o: Obstacle = g.lanes
           ? { x: LANE_SPAWN_X, ...randomLaneObstacle(points, rng) }
           : { x: WIDTH, lane: 0, ...randomObstacle(points, rng) }

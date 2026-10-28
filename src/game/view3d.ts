@@ -7,6 +7,7 @@ import {
   PLAYER_H,
   PLAYER_W,
   PLAYER_X,
+  UNITS_PER_POINT,
   WIDTH,
   obstacleSideSpan,
   playerSideSpan,
@@ -16,6 +17,18 @@ import {
 
 /** The run swings into 3D when it reaches this many meters */
 export const SWITCH_METERS = 200
+/** No new obstacles until this many meters, so the switch and the first meters in 3D are clear */
+export const QUIET_UNTIL_METERS = 250
+// Stop spawning just early enough that the last obstacle has left the 2D board when the swing
+// starts: an obstacle spawns at x = WIDTH and must travel past x = 0 (the widest 2D obstacle is 54)
+const WIDEST_2D_OBSTACLE = 54
+export const QUIET_FROM_METERS = SWITCH_METERS - Math.ceil((WIDTH + WIDEST_2D_OBSTACLE) / UNITS_PER_POINT)
+
+/** The run with no new obstacles around the switch to 3D (only for runs that will switch) */
+export function quietForSwitch(state: GameState): GameState {
+  return { ...state, quiet: { from: QUIET_FROM_METERS, until: QUIET_UNTIL_METERS } }
+}
+
 /** Length of the camera swing, in real time */
 export const SWING_SECONDS = 1.5
 /** Slowest game speed during the swing (at its middle) */

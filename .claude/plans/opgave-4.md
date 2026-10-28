@@ -262,3 +262,8 @@ top speed, and a lane change was a hit as soon as the G was 35 % into an occupie
   is free just before halfway. A G settled in a lane collides as before.
 - Tests: spawn x and shop start in both modes, grace states, a dodge that only survives with the grace, the G and
   the spawn point inside the chase view, and the fog fade at the spawn point.
+- **Quiet around the switch:** for a run that will switch to 3D (the scene is ready), no new obstacles spawn while
+  the score is in `[QUIET_FROM_METERS, QUIET_UNTIL_METERS)` = `[179, 250)`. 179 m is just early enough that the last
+  obstacle has left the 2D board when the swing starts at 200 m (`(200 - 179) × 20 ≥ WIDTH + 54`). Runs that stay
+  in 2D (no WebGL, reduced motion) are unchanged. The engine gets `GameState.quiet` (null by default) and
+  `UNITS_PER_POINT`; `quietForSwitch` in `view3d.ts` sets the window.
