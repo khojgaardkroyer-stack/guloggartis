@@ -41,7 +41,7 @@ function saveHighScore(score: number) {
 type View = '2d' | 'swing' | '3d'
 
 // A press on the board in lane mode: where and when it started, how far it has moved sideways
-type Pointer = { id: number; x: number; y: number; dx: number; downAt: number; press: Press }
+type Pointer = { x: number; y: number; dx: number; downAt: number; press: Press }
 
 const STEER_KEYS: Record<string, -1 | 1> = { ArrowLeft: -1, a: -1, A: -1, ArrowRight: 1, d: 1, D: 1 }
 const JUMP_KEYS = new Set([' ', 'ArrowUp', 'w', 'W'])
@@ -68,7 +68,8 @@ function GGame({ id, onClose }: GGameProps) {
   // Swing progress the 3D view is drawn at: 0..1 during the swing, 1 in 3D
   const swing = useRef(0)
   const pendingSteer = useRef<(-1 | 1)[]>([])
-  const press = useRef<Pointer | null>(null)
+  // Presses in lane mode by pointerId, so two thumbs on a phone are each read on their own
+  const presses = useRef(new Map<number, Pointer>())
   const cleared2D = useRef(false)
 
   // Game state lives in a ref so the animation loop doesn't re-render React
@@ -98,7 +99,7 @@ function GGame({ id, onClose }: GGameProps) {
     swing.current = 0
     setLanes(false)
     pendingSteer.current = []
-    press.current = null
+    presses.current.clear()
   }
 
   // The 3D view is gone for this mount. A run in lanes can't go on in 2D, so it ends as a loss.
@@ -106,6 +107,7 @@ function GGame({ id, onClose }: GGameProps) {
     if (view.current === '2d') return
     setView('2d')
     setLanes(false)
+    presses.current.clear()
     const g = game.current
     if (g.lanes) {
       const ended = g.status === 'running' || g.status === 'delivering'
@@ -229,7 +231,7 @@ function GGame({ id, onClose }: GGameProps) {
         setView('swing')
       }
       // A press held still in the middle jumps without waiting for the release
-      if (press.current) holdPointer(press.current, now)
+      for (const p of presses.current.values()) holdPointer(p, now)
       // The swing runs in real time while the game runs in slow motion
       let timeScale = 1
       if (view.current === 'swing') {
@@ -255,7 +257,10 @@ function GGame({ id, onClose }: GGameProps) {
       if (g.status !== prev.status) {
         if (g.status === 'over' || g.status === 'delivering') recordHighScore(g.score)
         setStatus(g.status)
-        if (g.status === 'over' || g.status === 'won') return
+        if (g.status === 'over' || g.status === 'won') {
+          presses.current.clear()
+          return
+        }
       }
       frame = requestAnimationFrame(tick)
     }
@@ -297,14 +302,13 @@ function GGame({ id, onClose }: GGameProps) {
     } catch {
       // Capture is only a nicety: the swipe still counts if it ends on the board
     }
-    press.current = {
-      id: e.pointerId,
+    presses.current.set(e.pointerId, {
       x: e.clientX,
       y: e.clientY,
       dx: 0,
       downAt: performance.now(),
       press: startPress(e.clientX - rect.left, rect.width),
-    }
+    })
   }
 
   function holdPointer(p: Pointer, now: number) {
@@ -314,16 +318,16 @@ function GGame({ id, onClose }: GGameProps) {
   }
 
   function handlePointerMove(e: PointerEvent<HTMLCanvasElement>) {
-    const p = press.current
-    if (!p || p.id !== e.pointerId) return
+    const p = presses.current.get(e.pointerId)
+    if (!p) return
     p.dx = e.clientX - p.x
     holdPointer(p, performance.now())
   }
 
   function handlePointerUp(e: PointerEvent<HTMLCanvasElement>) {
-    const p = press.current
-    if (!p || p.id !== e.pointerId) return
-    press.current = null
+    const p = presses.current.get(e.pointerId)
+    if (!p) return
+    presses.current.delete(e.pointerId)
     if (!canSteer()) return
     const gesture = endPress(p.press, e.clientX - p.x, e.clientY - p.y)
     if (gesture === 'left' || gesture === 'right') pendingSteer.current.push(gesture === 'left' ? -1 : 1)
@@ -470,8 +474,8 @@ function GGame({ id, onClose }: GGameProps) {
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
-            onPointerCancel={() => {
-              press.current = null
+            onPointerCancel={(e) => {
+              presses.current.delete(e.pointerId)
             }}
             onKeyDown={handleKeyDown}
             className={`block aspect-[360/150] w-full cursor-pointer rounded-xl focus-visible:outline-2 focus-visible:outline-border-focus ${lanes && status === 'running' ? 'touch-none' : 'touch-manipulation'}`}
