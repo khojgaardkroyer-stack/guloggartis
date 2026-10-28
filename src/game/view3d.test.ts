@@ -3,11 +3,13 @@ import {
   GROUND_Y,
   HEIGHT,
   LANE_DROP_X,
+  LANE_SPAWN_X,
   OBSTACLES,
   LANE_OBSTACLES,
   PLAYER_H,
   PLAYER_W,
   PLAYER_X,
+  UNITS_PER_POINT,
   WIDTH,
   collides,
   enterLanes,
@@ -18,12 +20,16 @@ import {
   type ObstacleTemplate,
 } from './engine'
 import {
+  QUIET_FROM_METERS,
+  QUIET_UNTIL_METERS,
   SLOWMO_MIN,
+  SWITCH_METERS,
   boxesOverlap,
   cameraPose,
   can3D,
   obstacleBox,
   playerBox,
+  quietForSwitch,
   swingTimeScale,
   worldY,
 } from './view3d'
@@ -76,13 +82,42 @@ describe('cameraPose', () => {
     expect(px).toBeLessThan(PLAYER_X)
     expect(pz).toBeCloseTo(0, 6)
     expect(py).toBeGreaterThan(PLAYER_H)
-    // A little above: a chase view, not a view from the top
-    expect(py).toBeLessThan(100)
     expect(tx).toBeGreaterThan(PLAYER_X + PLAYER_W)
     expect(ty).toBeLessThan(py)
     expect(pose.shift).toBe(0)
-    // Fog fades obstacles in around the spawn point
-    expect(pose.fogFar).toBeGreaterThan(WIDTH - px - 20)
+    // Tilted down about 18°: a chase view, not a view from the top
+    const tilt = (Math.atan2(py - ty, tx - px) * 180) / Math.PI
+    expect(tilt).toBeCloseTo(18, 6)
+  })
+
+  // Angle below the chase camera's view axis (degrees) and fog depth of a point at run position x, height y
+  function inChaseView(x: number, y: number) {
+    const pose = cameraPose(1)
+    const [px, py] = pose.position
+    const [tx, ty] = pose.target
+    const axis = Math.atan2(py - ty, tx - px)
+    const len = Math.hypot(tx - px, ty - py)
+    const depth = ((x - px) * (tx - px) + (y - py) * (ty - py)) / len
+    const fog = Math.min(Math.max((depth - pose.fogNear) / (pose.fogFar - pose.fogNear), 0), 1)
+    return { below: ((Math.atan2(py - y, x - px) - axis) * 180) / Math.PI, fog, halfFov: pose.fov / 2 }
+  }
+
+  it('shows the G and the track up to the lane-mode spawn point', () => {
+    for (const [x, y] of [
+      [PLAYER_X + PLAYER_W / 2, 0],
+      [PLAYER_X + PLAYER_W / 2, PLAYER_H],
+      [LANE_SPAWN_X, 0],
+    ]) {
+      const { below, halfFov } = inChaseView(x, y)
+      expect(Math.abs(below)).toBeLessThan(halfFov)
+    }
+  })
+
+  it('fades obstacles in out of the fog just after they spawn at LANE_SPAWN_X', () => {
+    expect(inChaseView(LANE_SPAWN_X, 0).fog).toBeGreaterThan(0.9)
+    expect(inChaseView(LANE_SPAWN_X, 0).fog).toBeLessThan(1)
+    // Fully visible well before reaching the G: at least 300 units of clear track ahead of it
+    expect(inChaseView(PLAYER_X + PLAYER_W + 300, 0).fog).toBe(0)
   })
 
   it('sees lane-mode obstacles leave behind it: LANE_DROP_X is behind the chase camera', () => {
@@ -164,5 +199,22 @@ describe('can3D', () => {
     expect(can3D({ webgl: true, reducedMotion: true })).toBe(false)
     expect(can3D({ webgl: false, reducedMotion: true })).toBe(false)
     expect(can3D({ webgl: true, reducedMotion: false })).toBe(true)
+  })
+})
+
+describe('quiet around the switch', () => {
+  it('stops spawning early enough that the 2D board is empty when the swing starts, until 250 m', () => {
+    expect(QUIET_UNTIL_METERS).toBe(250)
+    expect(QUIET_FROM_METERS).toBeLessThan(SWITCH_METERS)
+    // An obstacle spawned just before QUIET_FROM_METERS travels this far by SWITCH_METERS and must
+    // be past x = 0 by then
+    const widest = Math.max(...OBSTACLES.map((o) => o.make().w))
+    expect((SWITCH_METERS - QUIET_FROM_METERS) * UNITS_PER_POINT).toBeGreaterThanOrEqual(WIDTH + widest)
+    // ...but no more than a couple of meters early
+    expect((SWITCH_METERS - QUIET_FROM_METERS - 1) * UNITS_PER_POINT).toBeLessThan(WIDTH + widest)
+  })
+
+  it('sets the quiet window on the run', () => {
+    expect(quietForSwitch(startGame()).quiet).toEqual({ from: QUIET_FROM_METERS, until: QUIET_UNTIL_METERS })
   })
 })

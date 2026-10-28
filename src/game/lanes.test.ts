@@ -3,10 +3,13 @@ import {
   GROUND_Y,
   LANE_CHANGE_SECONDS,
   LANE_DROP_X,
+  LANE_SPAWN_X,
   PLAYER_H,
   PLAYER_W,
   PLAYER_X,
+  WIDTH,
   WIN_SCORE,
+  collides,
   enterLanes,
   obstacleSideSpan,
   playerSideSpan,
@@ -215,9 +218,38 @@ describe('collisions in lane mode', () => {
       expect(jumpable).toBe(true)
     }
   })
+
+  // A van in lane 1 right beside the G, which is gliding between lane 0 and lane 1
+  const gliding = (laneX: number, lane: Lane) =>
+    collides(laneGame({ lane, laneX, obstacles: [placed(VAN, 1)] }))
+
+  it('forgives grazing an obstacle from the side while changing lanes', () => {
+    // Steering towards the van: only a hit once the G is more than halfway over
+    expect(gliding(0.5, 1)).toBe(false)
+    expect(gliding(0.6, 1)).toBe(true)
+    // Dodging out of the van's lane: free just before halfway (the old 5-unit padding needed 0.7)
+    expect(gliding(0.45, 0)).toBe(false)
+    expect(gliding(0.55, 0)).toBe(true)
+  })
+
+  it('a dodge that starts while the van is still a little ahead survives', () => {
+    // At 300 units/s the van, 20 units ahead, reaches the G's hitbox after about half a lane change
+    // (with the old 5-unit padding this was a hit)
+    const start = laneGame({ lane: 1, laneX: 1, speed: 300, obstacles: [placed(VAN, 1, PLAYER_X + PLAYER_W + 20)] })
+    let s = step(start, DT, LEFT, noRng)
+    for (let i = 0; i < 60 && s.status === 'running'; i++) s = step(s, DT, NO_INPUT, noRng)
+    expect(s.status).toBe('running')
+  })
 })
 
 describe('spawning in lane mode', () => {
+  it('spawns obstacles at LANE_SPAWN_X in lane mode, and at WIDTH with lane mode off', () => {
+    const lanes = step(laneGame({ distance: 300 * 20, nextObstacleIn: 0 }), DT, NO_INPUT, noRng)
+    expect(lanes.obstacles.at(-1)?.x).toBe(LANE_SPAWN_X)
+    const flat = step({ ...startGame(), distance: 300 * 20, nextObstacleIn: 0 }, DT, NO_INPUT, noRng)
+    expect(flat.obstacles.at(-1)?.x).toBe(WIDTH)
+  })
+
   it('spawns vans, towers and other kinds in all three lanes, and a row is always across all lanes', () => {
     const spawned = spawnsOver(laneGame({ distance: 300 * 20, nextObstacleIn: 0 }), 30000, seeded(4))
     expect(spawned.length).toBeGreaterThan(100)
@@ -237,7 +269,37 @@ describe('spawning in lane mode', () => {
   })
 })
 
+describe('quiet window', () => {
+  const quiet = { from: 180, until: 250 }
+  const spawnsAt = (state: GameState) => step({ ...state, nextObstacleIn: 0 }, DT, NO_INPUT, noRng).obstacles.length
+
+  it('spawns nothing while the score is inside the window, in 2D and in lane mode', () => {
+    for (const base of [startGame(), laneGame()]) {
+      for (const meters of [180, 200, 249]) {
+        expect(spawnsAt({ ...base, quiet, distance: meters * 20 })).toBe(0)
+      }
+      expect(spawnsAt({ ...base, quiet, distance: 179 * 20 })).toBe(1)
+      expect(spawnsAt({ ...base, quiet, distance: 250 * 20 })).toBe(1)
+    }
+  })
+
+  it('without a window, spawning is unchanged', () => {
+    expect(startGame().quiet).toBeNull()
+    expect(spawnsAt({ ...startGame(), distance: 200 * 20 })).toBe(1)
+  })
+
+  it('a run keeps its window when lane mode switches on', () => {
+    expect(enterLanes({ ...startGame(), quiet }).quiet).toEqual(quiet)
+  })
+})
+
 describe('winning in lane mode', () => {
+  it('brings the shop in from LANE_SPAWN_X in lane mode, and from WIDTH with lane mode off', () => {
+    const atGoal = { distance: WIN_SCORE * 20 - 1, nextObstacleIn: 100 }
+    expect(step(laneGame(atGoal), DT, NO_INPUT, noRng).shopX).toBe(LANE_SPAWN_X + 10)
+    expect(step({ ...startGame(), ...atGoal }, DT, NO_INPUT, noRng).shopX).toBe(WIDTH + 10)
+  })
+
   it('returns the G to the middle lane, ignores steering and still ends in a win', () => {
     let s = laneGame({ lane: 1, laneX: 1, distance: WIN_SCORE * 20 - 1 })
     s = step(s, DT, NO_INPUT, noRng)
