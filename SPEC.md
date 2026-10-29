@@ -208,7 +208,7 @@ flad sprite eller en ekstruderet form er alt sammen fint. Brug farverne fra desi
 
 ## Opgave 5: "Prøv det selv": en handel trin for trin
 
-**Status:** Ikke startet
+**Status:** I gang
 
 **Mål:** en gennemgang med spilelementer, hvor den besøgende spiller en SikkerHandel igennem som enten køber eller
 sælger, fra første bud til bedømmelse.
