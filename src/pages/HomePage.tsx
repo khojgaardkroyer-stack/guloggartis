@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import FaqDrawer from '../components/FaqDrawer'
 import FoldableGame from '../components/FoldableGame'
 import TextSection from '../components/TextSection'
+import Walkthrough from '../components/walkthrough/Walkthrough'
 import { faqs, GUL_OG_GRATIS_URL, sections } from '../content'
 
 function HomePage() {
@@ -28,7 +29,9 @@ function HomePage() {
           </p>
         </header>
 
-        {sections.map((section) => (
+        <TextSection section={sections[0]} />
+        <Walkthrough />
+        {sections.slice(1).map((section) => (
           <TextSection key={section.title} section={section} />
         ))}
 
