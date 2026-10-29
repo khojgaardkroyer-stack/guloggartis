@@ -107,13 +107,11 @@ function Walkthrough() {
   }
 
   return (
-    // Extra bottom padding on phones keeps the last row of buttons clear of the fixed
-    // "Ofte stillede spørgsmål" button in the bottom-left corner when the card ends at the viewport's bottom.
-    <section className="w-full space-y-6 rounded-3xl bg-surface-white p-6 pb-24 shadow-card-shadow sm:p-8">
+    <section className="w-full space-y-6 rounded-3xl bg-surface-white p-6 shadow-card-shadow sm:p-8">
       <h2 className="text-2xl font-bold">Prøv en handel selv</h2>
 
       {/* Fixed minimum height from the role choice through every step, so the card doesn't jump. */}
-      <div className="flex min-h-188 flex-col gap-6 sm:min-h-156">
+      <div className="flex min-h-188 flex-col gap-6 sm:min-h-154">
         <div aria-live="polite" className="flex flex-1 flex-col gap-6">
           {role === null ? (
             <>
