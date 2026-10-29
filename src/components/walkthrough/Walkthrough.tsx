@@ -6,6 +6,7 @@ import {
   PiArrowLeft,
   PiArrowRight,
   PiChatCircleDots,
+  PiGuitar,
   PiShoppingCart,
   PiStarFill,
   PiStorefront,
@@ -106,42 +107,56 @@ function Walkthrough() {
   }
 
   return (
-    <section className="w-full space-y-6 rounded-3xl bg-surface-white p-6 shadow-card-shadow sm:p-8">
+    // Extra bottom padding on phones keeps the last row of buttons clear of the fixed
+    // "Ofte stillede spørgsmål" button in the bottom-left corner when the card ends at the viewport's bottom.
+    <section className="w-full space-y-6 rounded-3xl bg-surface-white p-6 pb-24 shadow-card-shadow sm:p-8">
       <h2 className="text-2xl font-bold">Prøv en handel selv</h2>
 
-      <div aria-live="polite" className="flex min-h-152 flex-col gap-6 sm:min-h-120">
-        {role === null ? (
-          <div className="my-auto space-y-6 text-center">
-            <h3 ref={headingRef} tabIndex={-1} className="text-2xl font-bold outline-none">
-              Vil du prøve som køber eller sælger?
-            </h3>
-            <p className="text-lg text-text-primary">
-              Vi handler med en brugt guitar til 800 kr. Alt er på skrømt.
-            </p>
-            <div className="flex flex-wrap justify-center gap-3">
-              <PillButton icon={PiShoppingCart} label="Køber" onClick={() => start('buyer')} />
-              <PillButton icon={PiStorefront} label="Sælger" onClick={() => start('seller')} />
-            </div>
+      {/* Fixed minimum height from the role choice through every step, so the card doesn't jump. */}
+      <div className="flex min-h-188 flex-col gap-6 sm:min-h-156">
+        <div aria-live="polite" className="flex flex-1 flex-col gap-6">
+          {role === null ? (
+            <>
+              <MoneyTrack money="buyer" />
+              <div className="my-auto space-y-6 text-center">
+                <span
+                  aria-hidden="true"
+                  className="mx-auto flex size-24 items-center justify-center rounded-full bg-surface-yellow-light"
+                >
+                  <PiGuitar className="size-16 text-icon-default" />
+                </span>
+                <h3 ref={headingRef} tabIndex={-1} className="text-2xl font-bold outline-none">
+                  Vil du prøve som køber eller sælger?
+                </h3>
+                <p className="text-lg text-text-primary">
+                  Vi handler med en brugt guitar til 800 kr. Alt er på skrømt.
+                </p>
+                <div className="flex flex-wrap justify-center gap-3">
+                  <PillButton icon={PiShoppingCart} label="Køber" onClick={() => start('buyer')} />
+                  <PillButton icon={PiStorefront} label="Sælger" onClick={() => start('seller')} />
+                </div>
+              </div>
+            </>
+          ) : (
+            <StepView
+              role={role}
+              stepId={stepId}
+              rating={rating}
+              onRate={setRating}
+              onGo={go}
+              onTryOtherRole={() => start(OTHER_ROLE[role])}
+              headingRef={headingRef}
+            />
+          )}
+        </div>
+
+        {role !== null && (
+          <div className="flex flex-wrap gap-3 border-t border-surface-gray-light pt-6">
+            <PillButton icon={PiArrowLeft} label="Et trin tilbage" onClick={back} small />
+            <PillButton icon={PiArrowCounterClockwise} label="Start forfra" onClick={() => start(null)} small />
           </div>
-        ) : (
-          <StepView
-            role={role}
-            stepId={stepId}
-            rating={rating}
-            onRate={setRating}
-            onGo={go}
-            onTryOtherRole={() => start(OTHER_ROLE[role])}
-            headingRef={headingRef}
-          />
         )}
       </div>
-
-      {role !== null && (
-        <div className="flex flex-wrap gap-3 border-t border-surface-gray-light pt-6">
-          <PillButton icon={PiArrowLeft} label="Et trin tilbage" onClick={back} small />
-          <PillButton icon={PiArrowCounterClockwise} label="Start forfra" onClick={() => start(null)} small />
-        </div>
-      )}
     </section>
   )
 }
