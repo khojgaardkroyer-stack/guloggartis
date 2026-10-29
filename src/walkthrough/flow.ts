@@ -69,6 +69,10 @@ export const MONEY_LABEL: Record<Money, string> = {
   refunded: 'Pengene er tilbage hos køber.',
 }
 
+export function starsLabel(stars: number): string {
+  return stars === 1 ? '1 stjerne' : `${stars} stjerner`
+}
+
 const NORMAL = 7
 const RETURN = 8
 
