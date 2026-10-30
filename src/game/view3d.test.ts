@@ -21,7 +21,7 @@ import {
 import {
   boxesOverlap,
   cameraPose,
-  can3D,
+  availability3D,
   obstacleBox,
   playerBox,
   worldY,
@@ -167,11 +167,26 @@ describe('world boxes', () => {
   })
 })
 
-describe('can3D', () => {
-  it('needs WebGL and no reduced motion', () => {
-    expect(can3D({ webgl: false, reducedMotion: false })).toBe(false)
-    expect(can3D({ webgl: true, reducedMotion: true })).toBe(false)
-    expect(can3D({ webgl: false, reducedMotion: true })).toBe(false)
-    expect(can3D({ webgl: true, reducedMotion: false })).toBe(true)
+describe('availability3D', () => {
+  const base = { webgl: true, loadFailed: false, reducedMotion: false }
+
+  it('is ok with WebGL, a loaded scene and no reduced motion', () => {
+    expect(availability3D(base)).toBe('ok')
+  })
+
+  it('names the reason when 3D is not possible', () => {
+    expect(availability3D({ ...base, webgl: false })).toBe('no-webgl')
+    expect(availability3D({ ...base, loadFailed: true })).toBe('load-failed')
+    expect(availability3D({ ...base, reducedMotion: true })).toBe('reduced-motion')
+  })
+
+  it('puts no WebGL before a failed load, and a failed load before reduced motion', () => {
+    expect(availability3D({ webgl: false, loadFailed: true, reducedMotion: true })).toBe('no-webgl')
+    expect(availability3D({ webgl: true, loadFailed: true, reducedMotion: true })).toBe('load-failed')
+  })
+
+  it('is ok again once reduced motion is turned off, if nothing else is wrong', () => {
+    expect(availability3D({ ...base, reducedMotion: true })).toBe('reduced-motion')
+    expect(availability3D({ ...base, reducedMotion: false })).toBe('ok')
   })
 })

@@ -1,6 +1,6 @@
 import { type RefObject, useEffect, useRef, useState } from 'react'
 import type { GamePalette } from '../game/palette'
-import { can3D } from '../game/view3d'
+import { availability3D, type Availability3D } from '../game/view3d'
 import type { Scene3D } from '../game/three/scene'
 
 type SceneModule = typeof import('../game/three/scene')
@@ -56,20 +56,22 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia?.(REDUCED_MOTION).matches ?? false
 }
 
-/** Whether 3D runs are possible, and if not, why: no WebGL (or it was lost), or reduced motion */
-export type Availability3D = 'ok' | 'no-webgl' | 'reduced-motion'
-
-function checkAvailability(lost: boolean): Availability3D {
-  if (lost || !hasWebGL()) return 'no-webgl'
-  return can3D({ webgl: true, reducedMotion: prefersReducedMotion() }) ? 'ok' : 'reduced-motion'
+function checkAvailability(lost: boolean, loadFailed: boolean): Availability3D {
+  return availability3D({
+    webgl: !lost && hasWebGL(),
+    loadFailed,
+    reducedMotion: prefersReducedMotion(),
+  })
 }
 
 /**
  * The game's 3D view on `canvasRef`'s canvas. Call `prepare()` when the start screen is shown: if
  * 3D is available it starts loading the 3D code and building the scene in the background.
  * `ready()` returns the scene once it can draw, or null; `isReady` is the same as state, for
- * rendering. `availability` says whether a 3D run may start. `onLost` is called if the WebGL
- * context is lost; the 3D view is then gone for the rest of the mount.
+ * rendering. `availability` says whether a 3D run may start; if loading or building the scene
+ * fails it becomes 'load-failed'. When reduced motion is turned off while the game is open, the
+ * scene starts loading then. `onLost` is called if the WebGL context is lost; the 3D view is then
+ * gone for the rest of the mount.
  */
 export function useScene3D(
   canvasRef: RefObject<HTMLCanvasElement | null>,
@@ -79,7 +81,9 @@ export function useScene3D(
   const scene = useRef<Scene3D | null>(null)
   const [isReady, setIsReady] = useState(false)
   const lost = useRef(false)
-  const [availability, setAvailability] = useState<Availability3D>(() => checkAvailability(false))
+  // The 3D chunk couldn't be fetched, or the scene couldn't be built: 3D stays off for the mount
+  const loadFailed = useRef(false)
+  const [availability, setAvailability] = useState<Availability3D>(() => checkAvailability(false, false))
   // Stops the scene being built, if any, and disposes what it has made so far
   const cancelBuild = useRef<(() => void) | null>(null)
   const onLostRef = useRef(onLost)
@@ -117,17 +121,22 @@ export function useScene3D(
     }
   }, [canvasRef])
 
-  // Follow the reduced-motion setting while the game is open
+  // Follow the reduced-motion setting while the game is open; once it is turned off, prepare()
+  // starts loading the scene (and only updates availability otherwise)
+  const prepareRef = useRef(prepare)
+  useEffect(() => {
+    prepareRef.current = prepare
+  })
   useEffect(() => {
     const query = window.matchMedia?.(REDUCED_MOTION)
     if (!query) return
-    const onChange = () => setAvailability(checkAvailability(lost.current))
+    const onChange = () => prepareRef.current()
     query.addEventListener('change', onChange)
     return () => query.removeEventListener('change', onChange)
   }, [])
 
   function prepare() {
-    const now = checkAvailability(lost.current)
+    const now = checkAvailability(lost.current, loadFailed.current)
     setAvailability(now)
     if (now !== 'ok' || scene.current || cancelBuild.current) return
 
@@ -155,10 +164,12 @@ export function useScene3D(
 
     const build = async () => {
       const module = await loadSceneModule()
-      if (!module || cancelled) return
+      if (cancelled) return
+      if (!module) throw new Error('The 3D chunk could not be loaded')
       await pause(IDLE_FALLBACK_MS)
       const canvas = canvasRef.current
-      if (cancelled || !canvas || !palette.current) return
+      if (cancelled) return
+      if (!canvas || !palette.current) throw new Error('No canvas or palette for the 3D scene')
       building = module.createScene(canvas, palette.current)
       await building.warmUp(() => pause(STEP_FALLBACK_MS))
       if (cancelled || !building) return
@@ -170,10 +181,11 @@ export function useScene3D(
     }
     build()
       .catch(() => {
-        // No WebGL context after all: 3D is not available
+        // The chunk couldn't be fetched or the scene couldn't be built: 3D is not available, and
+        // a 3D button that is waiting for the scene stops waiting
         if (cancelled) return
-        lost.current = true
-        setAvailability('no-webgl')
+        loadFailed.current = true
+        setAvailability(checkAvailability(lost.current, true))
         building?.dispose()
         building = null
       })

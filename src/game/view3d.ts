@@ -156,7 +156,22 @@ export function cameraPose(t: number, jumpHeight = 0): CameraPose {
   }
 }
 
-/** Whether a 3D run is possible: needs WebGL, and not for visitors who prefer reduced motion */
-export function can3D({ webgl, reducedMotion }: { webgl: boolean; reducedMotion: boolean }): boolean {
-  return webgl && !reducedMotion
+/**
+ * Whether 3D runs are possible, and if not, why: no WebGL (or it was lost during the visit), the
+ * 3D scene could not be loaded or built, or the visitor prefers reduced motion
+ */
+export type Availability3D = 'ok' | 'no-webgl' | 'load-failed' | 'reduced-motion'
+
+export function availability3D({
+  webgl,
+  loadFailed,
+  reducedMotion,
+}: {
+  webgl: boolean
+  loadFailed: boolean
+  reducedMotion: boolean
+}): Availability3D {
+  if (!webgl) return 'no-webgl'
+  if (loadFailed) return 'load-failed'
+  return reducedMotion ? 'reduced-motion' : 'ok'
 }

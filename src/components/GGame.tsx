@@ -1,6 +1,7 @@
 import { type KeyboardEvent as ReactKeyboardEvent, type PointerEvent, useEffect, useId, useRef, useState } from 'react'
 import { PiCornersIn, PiCornersOut, PiX } from 'react-icons/pi'
 import playerSrc from '../assets/g-player.svg'
+import { boardMessage } from '../game/boardMessage'
 import { drawGame } from '../game/draw'
 import { readPalette, type GamePalette } from '../game/palette'
 import {
@@ -31,6 +32,7 @@ const MODE_LABEL: Record<GameMode, string> = { '2d': '2D', '3d': '3D' }
 
 const REASON_3D = {
   'no-webgl': '3D virker ikke i din browser.',
+  'load-failed': '3D kunne ikke hentes.',
   'reduced-motion': '3D er slået fra, fordi du har valgt mindre bevægelse.',
 } as const
 
@@ -241,11 +243,14 @@ function GGame({ id, onClose }: GGameProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // 3D was chosen while the scene was still loading: start the run once it is ready
+  // 3D was chosen while the scene was still loading: start the run once it is ready, or stop
+  // waiting if 3D became unavailable meanwhile (eg. the scene couldn't be loaded)
   useEffect(() => {
-    if (waiting3D && scene3d.isReady) startRun('3d')
+    if (!waiting3D) return
+    if (scene3d.availability !== 'ok') setWaiting3D(false)
+    else if (scene3d.isReady) startRun('3d')
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [waiting3D, scene3d.isReady])
+  }, [waiting3D, scene3d.isReady, scene3d.availability])
 
   useEffect(() => {
     if (status !== 'running' && status !== 'delivering') {
@@ -460,14 +465,7 @@ function GGame({ id, onClose }: GGameProps) {
     )
   }
 
-  const message =
-    status === 'ready'
-      ? 'Vælg 2D eller 3D nedenfor'
-      : status === 'over'
-        ? 'Av! Tryk for at prøve igen'
-        : status === 'won'
-          ? '📦 Pakken er afleveret! Du vandt!'
-          : null
+  const message = boardMessage(status, mode, scene3d.availability === 'ok')
 
   return (
     <section
