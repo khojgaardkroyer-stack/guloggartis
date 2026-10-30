@@ -1,4 +1,4 @@
-import { type RefObject, useEffect, useRef } from 'react'
+import { type RefObject, useEffect, useRef, useState } from 'react'
 import type { GamePalette } from '../game/palette'
 import { can3D } from '../game/view3d'
 import type { Scene3D } from '../game/three/scene'
@@ -30,8 +30,8 @@ function hasWebGL(): boolean {
 }
 
 // Building the scene (the WebGL context and the G, then the obstacle models a kind at a time,
-// then the shaders) is spread over idle time early in the run, long before the switch at
-// SWITCH_METERS, so no single frame of the 2D run stalls for long
+// then the shaders) is spread over idle time while the start screen is shown, so no single frame
+// stalls for long, also if a 2D run has already started
 const IDLE_TIMEOUT_MS = 1000
 // Where requestIdleCallback is missing (eg. Safari): the delay before the first step, and between steps
 const IDLE_FALLBACK_MS = 300
@@ -50,15 +50,26 @@ function whenIdle(callback: () => void, fallbackMs: number): () => void {
   return () => window.clearTimeout(id)
 }
 
+const REDUCED_MOTION = '(prefers-reduced-motion: reduce)'
+
 function prefersReducedMotion(): boolean {
-  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+  return window.matchMedia?.(REDUCED_MOTION).matches ?? false
+}
+
+/** Whether 3D runs are possible, and if not, why: no WebGL (or it was lost), or reduced motion */
+export type Availability3D = 'ok' | 'no-webgl' | 'reduced-motion'
+
+function checkAvailability(lost: boolean): Availability3D {
+  if (lost || !hasWebGL()) return 'no-webgl'
+  return can3D({ webgl: true, reducedMotion: prefersReducedMotion() }) ? 'ok' : 'reduced-motion'
 }
 
 /**
- * The game's 3D view on `canvasRef`'s canvas. Call `prepare()` when a run starts: it decides
- * whether this run may switch to 3D and starts loading the 3D code in the background. `ready()`
- * returns the scene once it can draw, or null. `onLost` is called if the WebGL context is lost;
- * the 3D view is then gone for the rest of the mount.
+ * The game's 3D view on `canvasRef`'s canvas. Call `prepare()` when the start screen is shown: if
+ * 3D is available it starts loading the 3D code and building the scene in the background.
+ * `ready()` returns the scene once it can draw, or null; `isReady` is the same as state, for
+ * rendering. `availability` says whether a 3D run may start. `onLost` is called if the WebGL
+ * context is lost; the 3D view is then gone for the rest of the mount.
  */
 export function useScene3D(
   canvasRef: RefObject<HTMLCanvasElement | null>,
@@ -66,9 +77,9 @@ export function useScene3D(
   onLost: () => void,
 ) {
   const scene = useRef<Scene3D | null>(null)
-  // Whether the current run may use 3D (WebGL and no reduced motion)
-  const enabled = useRef(false)
+  const [isReady, setIsReady] = useState(false)
   const lost = useRef(false)
+  const [availability, setAvailability] = useState<Availability3D>(() => checkAvailability(false))
   // Stops the scene being built, if any, and disposes what it has made so far
   const cancelBuild = useRef<(() => void) | null>(null)
   const onLostRef = useRef(onLost)
@@ -80,6 +91,8 @@ export function useScene3D(
     const canvas = canvasRef.current
     const handleLost = () => {
       lost.current = true
+      setAvailability('no-webgl')
+      setIsReady(false)
       cancelBuild.current?.()
       cancelBuild.current = null
       scene.current?.dispose()
@@ -100,14 +113,25 @@ export function useScene3D(
       cancelBuild.current = null
       scene.current?.dispose()
       scene.current = null
+      setIsReady(false)
     }
   }, [canvasRef])
 
-  function prepare() {
-    enabled.current = !lost.current && can3D({ webgl: hasWebGL(), reducedMotion: prefersReducedMotion() })
-    if (!enabled.current || scene.current || cancelBuild.current) return
+  // Follow the reduced-motion setting while the game is open
+  useEffect(() => {
+    const query = window.matchMedia?.(REDUCED_MOTION)
+    if (!query) return
+    const onChange = () => setAvailability(checkAvailability(lost.current))
+    query.addEventListener('change', onChange)
+    return () => query.removeEventListener('change', onChange)
+  }, [])
 
-    // Until the scene is built and its shaders compiled, ready() returns null and the run stays in 2D
+  function prepare() {
+    const now = checkAvailability(lost.current)
+    setAvailability(now)
+    if (now !== 'ok' || scene.current || cancelBuild.current) return
+
+    // Until the scene is built and its shaders compiled, ready() returns null and no 3D run starts
     let cancelled = false
     let building: Scene3D | null = null
     let cancelIdle: (() => void) | null = null
@@ -142,12 +166,14 @@ export function useScene3D(
       building.resize()
       scene.current = building
       building = null
+      setIsReady(true)
     }
     build()
       .catch(() => {
-        // No WebGL context after all: stay in 2D
+        // No WebGL context after all: 3D is not available
         if (cancelled) return
         lost.current = true
+        setAvailability('no-webgl')
         building?.dispose()
         building = null
       })
@@ -157,8 +183,8 @@ export function useScene3D(
   }
 
   function ready(): Scene3D | null {
-    return enabled.current ? scene.current : null
+    return scene.current
   }
 
-  return { prepare, ready }
+  return { prepare, ready, isReady, availability }
 }

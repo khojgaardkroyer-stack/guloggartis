@@ -21,7 +21,7 @@ export const SHOP_DOOR_X = 18
 export const SHOP_DOOR_W = 26
 export const WALK_SPEED = 110
 
-// Lane mode (3D only): three lanes side by side, switched on by enterLanes()
+// Lane mode (3D runs only): three lanes side by side, switched on by enterLanes() / startGame('3d')
 export const LANES = 3
 export const LANE_W = 40 // distance between lane centres, in game units
 export const LANE_CHANGE_SECONDS = 0.15 // time to glide one lane sideways
@@ -38,6 +38,8 @@ export const LANE_SPAWN_X = WIDTH + 250
 export const LANE_DROP_X = -200
 
 export type Status = 'ready' | 'running' | 'delivering' | 'over' | 'won'
+/** A run is 2D from start to finish, or 3D (in lane mode) from start to finish */
+export type GameMode = '2d' | '3d'
 // van and tower only spawn in lane mode and are too tall to jump over
 export type ObstacleKind = 'parcel' | 'stack' | 'row' | 'cone' | 'envelope' | 'van' | 'tower'
 /** -1 = left, 0 = middle, 1 = right */
@@ -79,8 +81,6 @@ export type GameState = {
   lane: Lane
   /** The G's actual sideways position in lane units; glides towards `lane` */
   laneX: number
-  /** No new obstacles while the score is in [from, until), eg. around the switch to 3D */
-  quiet: { from: number; until: number } | null
 }
 
 // New obstacle types unlock as the score climbs
@@ -140,12 +140,13 @@ export function newGame(): GameState {
     lanes: false,
     lane: 0,
     laneX: 0,
-    quiet: null,
   }
 }
 
-export function startGame(): GameState {
-  return { ...newGame(), status: 'running' }
+/** A new run in `mode`: a 3D run is in lane mode, in the middle lane, from its first step */
+export function startGame(mode: GameMode = '2d'): GameState {
+  const running: GameState = { ...newGame(), status: 'running' }
+  return mode === '3d' ? enterLanes(running) : running
 }
 
 /** Switches lane mode on, with the G in the middle lane. Obstacles keep their lanes. */
@@ -258,8 +259,7 @@ export function step(state: GameState, dt: number, input: GameInput, rng: Rng = 
       if (g.lanes) g.lane = 0
     } else {
       g.nextObstacleIn -= dt
-      const quiet = g.quiet !== null && points >= g.quiet.from && points < g.quiet.until
-      if (g.nextObstacleIn <= 0 && !quiet) {
+      if (g.nextObstacleIn <= 0) {
         const o: Obstacle = g.lanes
           ? { x: LANE_SPAWN_X, ...randomLaneObstacle(points, rng) }
           : { x: WIDTH, lane: 0, ...randomObstacle(points, rng) }

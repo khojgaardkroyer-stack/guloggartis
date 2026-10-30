@@ -269,30 +269,6 @@ describe('spawning in lane mode', () => {
   })
 })
 
-describe('quiet window', () => {
-  const quiet = { from: 180, until: 250 }
-  const spawnsAt = (state: GameState) => step({ ...state, nextObstacleIn: 0 }, DT, NO_INPUT, noRng).obstacles.length
-
-  it('spawns nothing while the score is inside the window, in 2D and in lane mode', () => {
-    for (const base of [startGame(), laneGame()]) {
-      for (const meters of [180, 200, 249]) {
-        expect(spawnsAt({ ...base, quiet, distance: meters * 20 })).toBe(0)
-      }
-      expect(spawnsAt({ ...base, quiet, distance: 179 * 20 })).toBe(1)
-      expect(spawnsAt({ ...base, quiet, distance: 250 * 20 })).toBe(1)
-    }
-  })
-
-  it('without a window, spawning is unchanged', () => {
-    expect(startGame().quiet).toBeNull()
-    expect(spawnsAt({ ...startGame(), distance: 200 * 20 })).toBe(1)
-  })
-
-  it('a run keeps its window when lane mode switches on', () => {
-    expect(enterLanes({ ...startGame(), quiet }).quiet).toEqual(quiet)
-  })
-})
-
 describe('winning in lane mode', () => {
   it('brings the shop in from LANE_SPAWN_X in lane mode, and from WIDTH with lane mode off', () => {
     const atGoal = { distance: WIN_SCORE * 20 - 1, nextObstacleIn: 100 }

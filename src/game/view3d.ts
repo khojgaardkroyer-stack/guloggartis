@@ -7,7 +7,6 @@ import {
   PLAYER_H,
   PLAYER_W,
   PLAYER_X,
-  UNITS_PER_POINT,
   WIDTH,
   obstacleSideSpan,
   playerSideSpan,
@@ -15,24 +14,8 @@ import {
   type Obstacle,
 } from './engine'
 
-/** The run swings into 3D when it reaches this many meters */
-export const SWITCH_METERS = 200
-/** No new obstacles until this many meters, so the switch and the first meters in 3D are clear */
-export const QUIET_UNTIL_METERS = 250
-// Stop spawning just early enough that the last obstacle has left the 2D board when the swing
-// starts: an obstacle spawns at x = WIDTH and must travel past x = 0 (the widest 2D obstacle is 54)
-const WIDEST_2D_OBSTACLE = 54
-export const QUIET_FROM_METERS = SWITCH_METERS - Math.ceil((WIDTH + WIDEST_2D_OBSTACLE) / UNITS_PER_POINT)
-
-/** The run with no new obstacles around the switch to 3D (only for runs that will switch) */
-export function quietForSwitch(state: GameState): GameState {
-  return { ...state, quiet: { from: QUIET_FROM_METERS, until: QUIET_UNTIL_METERS } }
-}
-
-/** Length of the camera swing, in real time */
+/** Length of the camera swing at the start of a 3D run, in real time; the G stands still meanwhile */
 export const SWING_SECONDS = 1.5
-/** Slowest game speed during the swing (at its middle) */
-export const SLOWMO_MIN = 0.3
 /** How long the 3D view takes to fade in over the 2D board when the swing starts */
 export const FADE_IN_MS = 200
 
@@ -43,11 +26,6 @@ const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 export function easeInOut(t: number): number {
   const c = clamp01(t)
   return c < 0.5 ? 4 * c * c * c : 1 - (-2 * c + 2) ** 3 / 2
-}
-
-/** Factor on the game's dt at swing progress `t` (0..1): 1 at both ends, SLOWMO_MIN in the middle */
-export function swingTimeScale(t: number): number {
-  return 1 - (1 - SLOWMO_MIN) * Math.sin(Math.PI * clamp01(t))
 }
 
 /** The G's turn around the vertical axis at swing progress `t`: 0 = side-on as in 2D, π/2 = seen from behind */
@@ -178,7 +156,7 @@ export function cameraPose(t: number, jumpHeight = 0): CameraPose {
   }
 }
 
-/** Whether the game may switch to 3D: needs WebGL, and not for visitors who prefer reduced motion */
+/** Whether a 3D run is possible: needs WebGL, and not for visitors who prefer reduced motion */
 export function can3D({ webgl, reducedMotion }: { webgl: boolean; reducedMotion: boolean }): boolean {
   return webgl && !reducedMotion
 }

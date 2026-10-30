@@ -523,7 +523,7 @@ export function createScene(canvas: HTMLCanvasElement, palette: GamePalette): Sc
 
   // Builds a few models of every obstacle (out of sight, still visible so their shaders are
   // compiled), one kind at a time between pauses, so the pools rarely grow mid-run. Then compiles
-  // every shader while the run is young, not on the switch at 200 m.
+  // every shader before the 3D run starts, not in its first frames.
   async function warmUp(pause: () => Promise<void>) {
     const templates = [...OBSTACLES.map((o) => o.make()), ...LANE_OBSTACLES.map((make) => make())]
     for (const template of templates) {
