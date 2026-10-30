@@ -20,7 +20,10 @@ Den besøgende vælger selv, om spillet skal køre i 2D eller 3D, i stedet for a
   shown (`scene3d.prepare()` when `GGame` mounts or becomes visible, not on the first run). Never in the front
   page's first load: the `scene` chunk stays a lazy `import()`. If the visitor presses 3D before the scene is ready,
   that button shows "Henter 3D …" and is busy (`aria-busy`, not clickable twice), and the 3D run starts by itself
-  as soon as the scene is ready. Reason: the user's choice.
+  as soon as the scene is ready. If loading or building the scene fails (eg. the chunk can't be fetched), 3D
+  becomes unavailable with the reason "3D kunne ikke hentes." and a pressed 3D button stops waiting, so it never
+  stays on "Henter 3D …". If "reducer bevægelse" is turned off while the game is open, the scene starts loading
+  then. Reason: the user's choice; review round 1.
 - **Start screen buttons under the board:** two pill buttons under the canvas (above the help text), "2D · HI 123"
   and "3D · HI 45" (each with its own record, no zero padding on the button). Pressing one starts a run in that mode
   at once. On the board, instead of "Tryk for at starte", the message is "Vælg 2D eller 3D nedenfor". At the start
@@ -36,13 +39,15 @@ Den besøgende vælger selv, om spillet skal køre i 2D eller 3D, i stedet for a
   til 3D") is disabled with a short reason shown next to/under it: "3D virker ikke i din browser." (no WebGL) or
   "3D er slået fra, fordi du har valgt mindre bevægelse." (reduced motion). 2D always works. If the WebGL context
   is lost during a 3D run, the run ends as lost ("over"), 3D is disabled from then on with "3D virker ikke i din
-  browser.", and "Skift til 2D" is offered. Reason: SPEC; a lane run can't continue in the 2D drawing.
+  browser.", and "Skift til 2D" is offered. The board message then says "3D stoppede. Skift til 2D nedenfor."
+  instead of "Av! Tryk for at prøve igen", because a tap can't restart 3D. Reason: SPEC; a lane run can't continue
+  in the 2D drawing; review round 1.
 - **Records:** two keys in `localStorage`, `ggame-highscore-2d` and `ggame-highscore-3d`, read and written with the
   existing try/catch style. On first read, if `ggame-highscore-2d` is missing and the old `ggame-highscore` exists,
   its value becomes the 2D record (copy it over; leave the old key alone). The 3D record starts at 0. Reason: the
   user's choice, so nobody loses their record.
-- **Score header:** during and after a run it shows the mode first: "2D HI 00123 00045" (same zero-padded format as
-  today). On the start screen, before any run, it shows the 2D record as "2D HI 00123 00000".
+- **Score header:** during and after a run it shows the mode first, in today's format: "2D HI 123 m  45 m". On the
+  start screen, before any run, it shows the 2D record as "2D HI 123 m  0 m".
 - **Help text under the board:** keep the two existing texts in `GGame.tsx` unchanged and pick them by mode instead
   of by lane mode: a 2D run and the start screen show "Hop med mellemrum, pil op eller tryk. Vind ved 2000 m!"; a
   3D run (including its intro swing and its end screen) shows "Hop med mellemrum, pil op eller W. Skift bane med
