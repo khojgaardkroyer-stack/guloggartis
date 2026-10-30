@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
   GROUND_Y,
+  LANE_SPAWN_X,
   PLAYER_H,
   PLAYER_X,
+  WIDTH,
   WIN_SCORE,
   randomObstacle,
   startGame,
   step,
+  type GameMode,
   type GameState,
   type Obstacle,
   type ObstacleTemplate,
@@ -152,5 +155,116 @@ describe('step', () => {
     const crashBefore = structuredClone(crashing)
     expect(step(crashing, DT, NO_INPUT, fixedRng()).status).toBe('over')
     expect(crashing).toEqual(crashBefore)
+  })
+})
+
+// Small seeded PRNG (mulberry32), so runs are repeatable
+function seeded(seed: number) {
+  let a = seed >>> 0
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0
+    let t = a
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+type Played = { states: GameState[]; spawned: (Obstacle & { at: number })[] }
+
+// Plays a run from 0 m until it ends, clearing the track after every step so nothing is ever hit
+function playToEnd(mode: GameMode, seed: number): Played {
+  const rng = seeded(seed)
+  const states: GameState[] = []
+  const spawned: (Obstacle & { at: number })[] = []
+  let s = startGame(mode)
+  for (let i = 0; i < 60 * 600 && (s.status === 'running' || s.status === 'delivering'); i++) {
+    s = step(s, DT, NO_INPUT, rng)
+    states.push(s)
+    spawned.push(...s.obstacles.map((o) => ({ ...o, at: s.score })))
+    s = { ...s, obstacles: [] }
+  }
+  return { states, spawned }
+}
+
+describe('game modes', () => {
+  const twoD = playToEnd('2d', 1)
+  const threeD = playToEnd('3d', 1)
+
+  it('a 2D run never goes into lane mode, also past 200 m and up to the win', () => {
+    expect(startGame('2d').lanes).toBe(false)
+    expect(startGame().lanes).toBe(false)
+    expect(twoD.states.at(-1)?.score).toBe(WIN_SCORE)
+    for (const s of twoD.states) {
+      expect(s.lanes).toBe(false)
+      expect(s.lane).toBe(0)
+      expect(s.laneX).toBe(0)
+    }
+    expect(twoD.spawned.length).toBeGreaterThan(30)
+    for (const o of twoD.spawned) {
+      expect(o.kind).not.toBe('van')
+      expect(o.kind).not.toBe('tower')
+      expect(o.lane ?? 0).toBe(0)
+    }
+  })
+
+  it('a 3D run is in lane mode from its first step, in the middle lane', () => {
+    const start = startGame('3d')
+    expect(start.status).toBe('running')
+    expect(start.lanes).toBe(true)
+    expect(start.lane).toBe(0)
+    expect(start.laneX).toBe(0)
+    expect(start.score).toBe(0)
+    for (const s of threeD.states) expect(s.lanes).toBe(true)
+  })
+
+  it('a 3D run can spawn vans and towers, in every lane, from 0 m', () => {
+    // Hold the run at 0 m and collect what spawns there
+    const rng = seeded(2)
+    const kinds = new Set<string>()
+    const lanes = new Set<unknown>()
+    let s = startGame('3d')
+    for (let i = 0; i < 3000; i++) {
+      s = step({ ...s, obstacles: [], distance: 0 }, DT, NO_INPUT, rng)
+      for (const o of s.obstacles) {
+        expect(s.score).toBe(0)
+        expect(o.x).toBe(LANE_SPAWN_X)
+        kinds.add(o.kind)
+        lanes.add(o.lane)
+      }
+    }
+    expect(kinds.has('van')).toBe(true)
+    expect(kinds.has('tower')).toBe(true)
+    expect(lanes).toEqual(new Set([-1, 0, 1]))
+    // The score-unlocked kinds are unchanged: at 0 m only parcels besides vans and towers
+    expect([...kinds].sort()).toEqual(['parcel', 'tower', 'van'])
+  })
+
+  it.each([
+    ['2d', twoD],
+    ['3d', threeD],
+  ] as const)('a %s run reaches WIN_SCORE and ends in won via delivering', (_mode, played) => {
+    const statuses = played.states.map((s) => s.status)
+    const firstDelivering = statuses.indexOf('delivering')
+    expect(firstDelivering).toBeGreaterThan(0)
+    expect(statuses.slice(0, firstDelivering).every((st) => st === 'running')).toBe(true)
+    expect(played.states[firstDelivering].score).toBe(WIN_SCORE)
+    expect(statuses.at(-1)).toBe('won')
+    expect(statuses).not.toContain('over')
+  })
+
+  it('has no spawn pause around 200 m in either mode', () => {
+    for (const mode of ['2d', '3d'] as const) {
+      for (let meters = 150; meters <= 300; meters++) {
+        const s = { ...startGame(mode), distance: meters * 20, nextObstacleIn: 0 }
+        const next = step(s, DT, NO_INPUT, fixedRng())
+        expect(next.obstacles).toHaveLength(1)
+        expect(next.obstacles[0].x).toBe(mode === '2d' ? WIDTH : LANE_SPAWN_X)
+      }
+    }
+    // And in a whole run, obstacles keep coming between 180 m and 250 m
+    for (const played of [twoD, threeD]) {
+      expect(played.spawned.filter((o) => o.at >= 180 && o.at < 250).length).toBeGreaterThanOrEqual(2)
+    }
   })
 })

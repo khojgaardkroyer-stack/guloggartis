@@ -1,6 +1,7 @@
-import { type KeyboardEvent as ReactKeyboardEvent, type PointerEvent, useEffect, useRef, useState } from 'react'
+import { type KeyboardEvent as ReactKeyboardEvent, type PointerEvent, useEffect, useId, useRef, useState } from 'react'
 import { PiCornersIn, PiCornersOut, PiX } from 'react-icons/pi'
 import playerSrc from '../assets/g-player.svg'
+import { boardMessage } from '../game/boardMessage'
 import { drawGame } from '../game/draw'
 import { readPalette, type GamePalette } from '../game/palette'
 import {
@@ -9,35 +10,37 @@ import {
   PLAYER_W,
   WIDTH,
   WIN_SCORE,
-  enterLanes,
   newGame,
   startGame,
   step,
+  type GameMode,
   type Status,
 } from '../game/engine'
 import { endPress, holdPress, startPress, type Press } from '../game/gesture'
-import { FADE_IN_MS, SWING_SECONDS, SWITCH_METERS, quietForSwitch, swingTimeScale } from '../game/view3d'
+import { readRecord, saveRecord } from '../game/records'
+import { FADE_IN_MS, SWING_SECONDS } from '../game/view3d'
 import { useScene3D } from './useScene3D'
 
-const HIGH_SCORE_KEY = 'ggame-highscore'
+// localStorage itself can throw (eg. blocked site data), so the record helpers get it through this
+const getStorage = () => localStorage
 
-function readHighScore() {
-  try {
-    return Number(localStorage.getItem(HIGH_SCORE_KEY)) || 0
-  } catch {
-    return 0
-  }
+function readRecords(): Record<GameMode, number> {
+  return { '2d': readRecord(getStorage, '2d'), '3d': readRecord(getStorage, '3d') }
 }
 
-function saveHighScore(score: number) {
-  try {
-    localStorage.setItem(HIGH_SCORE_KEY, String(score))
-  } catch {
-    // storage unavailable; keep the score for this visit only
-  }
-}
+const MODE_LABEL: Record<GameMode, string> = { '2d': '2D', '3d': '3D' }
 
-// 2d: the 2D board. swing: the camera swings round behind the G. 3d: the chase view, in lanes.
+const REASON_3D = {
+  'no-webgl': '3D virker ikke i din browser.',
+  'load-failed': '3D kunne ikke hentes.',
+  'reduced-motion': '3D er slået fra, fordi du har valgt mindre bevægelse.',
+} as const
+
+// Pill buttons under the board, as the manual's secondary button
+const MODE_BUTTON =
+  'rounded-control-pill bg-button-secondary-background px-4 py-2 text-sm font-semibold text-text-primary transition hover:bg-state-hover-neutral focus-visible:outline-2 focus-visible:outline-border-focus disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-button-secondary-background aria-busy:cursor-progress'
+
+// 2d: the 2D board. swing: the 3D run's intro, the camera swings round behind the G. 3d: the chase view, in lanes.
 type View = '2d' | 'swing' | '3d'
 
 // A press on the board in lane mode: where and when it started, how far it has moved sideways
@@ -59,11 +62,16 @@ function GGame({ id, onClose }: GGameProps) {
   const [isFull, setIsFull] = useState(false)
   const [status, setStatus] = useState<Status>('ready')
   const [score, setScore] = useState(0)
-  const [highScore, setHighScore] = useState(readHighScore)
+  const [records, setRecords] = useState(readRecords)
+  // The mode of the current or last run; null on the start screen, before a run is chosen
+  const [mode, setMode] = useState<GameMode | null>(null)
+  const runMode = useRef<GameMode>('2d')
+  // 3D was chosen before the scene was ready: the run starts as soon as it is
+  const [waiting3D, setWaiting3D] = useState(false)
+  const reasonId = useId()
   // The view lives in a ref for the loop; the state copy is only for what React renders
   const view = useRef<View>('2d')
   const [shownView, setShownView] = useState<View>('2d')
-  const [lanes, setLanes] = useState(false)
   const swingStart = useRef(0)
   // Swing progress the 3D view is drawn at: 0..1 during the swing, 1 in 3D
   const swing = useRef(0)
@@ -97,16 +105,15 @@ function GGame({ id, onClose }: GGameProps) {
   function resetView() {
     setView('2d')
     swing.current = 0
-    setLanes(false)
     pendingSteer.current = []
     presses.current.clear()
   }
 
   // The 3D view is gone for this mount. A run in lanes can't go on in 2D, so it ends as a loss.
   function handleContextLost() {
+    setWaiting3D(false)
     if (view.current === '2d') return
     setView('2d')
-    setLanes(false)
     presses.current.clear()
     const g = game.current
     if (g.lanes) {
@@ -184,32 +191,66 @@ function GGame({ id, onClose }: GGameProps) {
     drawGame(ctx, game.current, playerSpriteFor(scale), palette.current)
   }
 
+  // Saves the current run's score as its mode's record if it beats it
   function recordHighScore(points: number) {
-    setHighScore((best) => {
-      if (points > best) {
-        saveHighScore(points)
-        return points
+    const m = runMode.current
+    const best = saveRecord(getStorage, m, points)
+    setRecords((r) => (best > r[m] ? { ...r, [m]: best } : r))
+  }
+
+  const loading3D = waiting3D && scene3d.availability === 'ok'
+
+  /**
+   * Starts a run in `next` at once. A 3D run starts with the camera swing; if the scene isn't
+   * ready yet, it waits for it instead. Returns whether the run started.
+   */
+  function startRun(next: GameMode): boolean {
+    if (next === '3d') {
+      if (scene3d.availability !== 'ok') return false
+      if (!scene3d.ready()) {
+        setWaiting3D(true)
+        return false
       }
-      return best
-    })
+    }
+    setWaiting3D(false)
+    resetView()
+    runMode.current = next
+    game.current = startGame(next)
+    setMode(next)
+    setScore(0)
+    setStatus('running')
+    if (next === '3d') {
+      swingStart.current = performance.now()
+      setView('swing')
+    }
+    // The buttons go away during the run: hand the keys to the board
+    canvasRef.current?.focus({ preventScroll: true })
+    return true
   }
 
   function handleInput() {
-    if (status === 'delivering') return
-    if (status !== 'running') {
-      resetView()
-      game.current = startGame()
-      setScore(0)
-      setStatus('running')
+    // On the start screen the run is chosen with the buttons under the board
+    if (status === 'delivering' || status === 'ready') return
+    if (status === 'over' || status === 'won') {
+      if (!mode || !startRun(mode)) return
     }
     pendingJump.current = true
   }
 
-  // Each run decides whether it may switch to 3D, and starts fetching the 3D code if so
+  // Start loading and building the 3D scene as soon as the start screen is shown
   useEffect(() => {
-    if (status === 'running') scene3d.prepare()
+    scene3d.prepare()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status])
+  }, [])
+
+  // 3D was chosen while the scene was still loading: start the run once it is ready, or stop
+  // waiting if 3D became unavailable meanwhile (eg. the scene couldn't be loaded)
+  useEffect(() => {
+    if (!waiting3D) return
+    if (scene3d.availability !== 'ok') setWaiting3D(false)
+    else if (scene3d.isReady) startRun('3d')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [waiting3D, scene3d.isReady, scene3d.availability])
 
   useEffect(() => {
     if (status !== 'running' && status !== 'delivering') {
@@ -224,31 +265,23 @@ function GGame({ id, onClose }: GGameProps) {
       last = now
       const prev = game.current
 
-      // Once this run is sure to switch to 3D, keep the track clear around the switch
-      if (view.current === '2d' && prev.status === 'running' && !prev.quiet && scene3d.ready()) {
-        game.current = quietForSwitch(prev)
-      }
-      // At SWITCH_METERS, or as soon as the 3D code has loaded after that, swing into 3D
-      const due = prev.status === 'running' && prev.score >= SWITCH_METERS
-      if (view.current === '2d' && due && scene3d.ready()) {
-        swingStart.current = now
-        setView('swing')
+      // A 3D run's intro: the camera swings round behind the G, which stands still meanwhile.
+      // Input during the swing is dropped, so the run starts calmly.
+      if (view.current === 'swing') {
+        swing.current = Math.min((now - swingStart.current) / 1000 / SWING_SECONDS, 1)
+        pendingJump.current = false
+        pendingSteer.current = []
+        if (swing.current < 1) {
+          draw()
+          frame = requestAnimationFrame(tick)
+          return
+        }
+        setView('3d')
       }
       // A press held still in the middle jumps without waiting for the release
       for (const p of presses.current.values()) holdPointer(p, now)
-      // The swing runs in real time while the game runs in slow motion
-      let timeScale = 1
-      if (view.current === 'swing') {
-        swing.current = Math.min((now - swingStart.current) / 1000 / SWING_SECONDS, 1)
-        timeScale = swingTimeScale(swing.current)
-        if (swing.current >= 1) {
-          setView('3d')
-          game.current = enterLanes(game.current)
-          setLanes(true)
-        }
-      }
 
-      const g = step(game.current, dt * timeScale, {
+      const g = step(game.current, dt, {
         jump: pendingJump.current,
         steer: pendingSteer.current.shift(),
       })
@@ -274,9 +307,9 @@ function GGame({ id, onClose }: GGameProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status])
 
-  // Steering only works in lane mode during a run
+  // Steering only works in lane mode during a run, after the intro swing
   function canSteer() {
-    return game.current.lanes && game.current.status === 'running'
+    return game.current.lanes && game.current.status === 'running' && view.current === '3d'
   }
 
   function handleKeyDown(e: ReactKeyboardEvent<HTMLCanvasElement>) {
@@ -360,6 +393,8 @@ function GGame({ id, onClose }: GGameProps) {
     game.current = newGame()
     setScore(0)
     setStatus('ready')
+    setMode(null)
+    setWaiting3D(false)
     if (document.fullscreenElement) {
       // Don't wait for fullscreenchange: the fold-up must not start while the section is still fixed
       const done = () => {
@@ -402,14 +437,35 @@ function GGame({ id, onClose }: GGameProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const message =
-    status === 'ready'
-      ? 'Tryk for at starte'
-      : status === 'over'
-        ? 'Av! Tryk for at prøve igen'
-        : status === 'won'
-          ? '📦 Pakken er afleveret! Du vandt!'
-          : null
+  // The header shows the 2D record until a run is chosen
+  const shownMode = mode ?? '2d'
+  const unavailable3D = scene3d.availability === 'ok' ? null : REASON_3D[scene3d.availability]
+  const reason3D = unavailable3D && (
+    <p id={reasonId} className={`w-full text-text-secondary ${isFull ? 'text-sm sm:text-base' : 'text-xs'}`}>
+      {unavailable3D}
+    </p>
+  )
+
+  // The 3D button (and "Skift til 3D"): disabled with a reason without 3D, busy while it loads
+  function button3D(label: string) {
+    return (
+      <button
+        type="button"
+        disabled={unavailable3D !== null}
+        aria-describedby={unavailable3D ? reasonId : undefined}
+        aria-busy={loading3D || undefined}
+        aria-disabled={loading3D || undefined}
+        onClick={() => {
+          if (!loading3D) startRun('3d')
+        }}
+        className={MODE_BUTTON}
+      >
+        {loading3D ? 'Henter 3D …' : label}
+      </button>
+    )
+  }
+
+  const message = boardMessage(status, mode, scene3d.availability === 'ok')
 
   return (
     <section
@@ -424,8 +480,8 @@ function GGame({ id, onClose }: GGameProps) {
     >
       <div
         className="w-full"
-        // Fit the 360x150 board inside the screen, leaving room for the header and help text
-        style={isFull ? { maxWidth: 'min(100%, calc((100dvh - 9rem) * 2.4))' } : undefined}
+        // Fit the 360x150 board inside the screen, leaving room for the header, the buttons and help text
+        style={isFull ? { maxWidth: 'min(100%, calc((100dvh - 12rem) * 2.4))' } : undefined}
       >
         <div className="mb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-1">
           <h2 className={`font-bold ${isFull ? 'text-xl sm:text-2xl' : 'text-sm'}`}>
@@ -439,9 +495,9 @@ function GGame({ id, onClose }: GGameProps) {
               className={`grid whitespace-pre text-text-secondary tabular-nums ${isFull ? 'text-base sm:text-lg' : 'text-xs'}`}
             >
               <span aria-hidden="true" className="invisible col-start-1 row-start-1">
-                {'HI 0000 m  0000 m'}
+                {'2D HI 0000 m  0000 m'}
               </span>
-              <span className="col-start-1 row-start-1 text-right">{`HI ${highScore} m  ${score} m`}</span>
+              <span className="col-start-1 row-start-1 text-right">{`${MODE_LABEL[shownMode]} HI ${records[shownMode]} m  ${score} m`}</span>
             </p>
             {/* Icon button as in the manual's modal close button: 16px icon, spacing/2 padding */}
             <button
@@ -482,7 +538,7 @@ function GGame({ id, onClose }: GGameProps) {
               presses.current.delete(e.pointerId)
             }}
             onKeyDown={handleKeyDown}
-            className={`block aspect-[360/150] w-full cursor-pointer rounded-xl focus-visible:outline-2 focus-visible:outline-border-focus ${lanes && status === 'running' ? 'touch-none' : 'touch-manipulation'}`}
+            className={`block aspect-[360/150] w-full cursor-pointer rounded-xl focus-visible:outline-2 focus-visible:outline-border-focus ${mode === '3d' && status === 'running' ? 'touch-none' : 'touch-manipulation'}`}
           />
           {/* The 3D view sits over the 2D board; the 2D canvas keeps focus and input */}
           <canvas
@@ -498,8 +554,31 @@ function GGame({ id, onClose }: GGameProps) {
             </p>
           )}
         </div>
+        {status === 'ready' && (
+          <div className="mt-2 flex flex-wrap items-center gap-2 px-1">
+            <button type="button" onClick={() => startRun('2d')} className={MODE_BUTTON}>
+              {`2D · HI ${records['2d']}`}
+            </button>
+            {button3D(`3D · HI ${records['3d']}`)}
+            {reason3D}
+          </div>
+        )}
+        {(status === 'over' || status === 'won') && mode && (
+          <div className="mt-2 flex flex-wrap items-center gap-2 px-1">
+            {mode === '3d' ? (
+              <button type="button" onClick={() => startRun('2d')} className={MODE_BUTTON}>
+                Skift til 2D
+              </button>
+            ) : (
+              <>
+                {button3D('Skift til 3D')}
+                {reason3D}
+              </>
+            )}
+          </div>
+        )}
         <p className={`mt-2 px-1 text-text-secondary ${isFull ? 'text-sm sm:text-base' : 'text-xs'}`}>
-          {lanes
+          {mode === '3d'
             ? 'Hop med mellemrum, pil op eller W. Skift bane med pilene, A/D, swipe eller tryk i siderne.'
             : `Hop med mellemrum, pil op eller tryk. Vind ved ${WIN_SCORE} m!`}
         </p>

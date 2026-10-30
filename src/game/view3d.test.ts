@@ -9,7 +9,6 @@ import {
   PLAYER_H,
   PLAYER_W,
   PLAYER_X,
-  UNITS_PER_POINT,
   WIDTH,
   collides,
   enterLanes,
@@ -20,38 +19,13 @@ import {
   type ObstacleTemplate,
 } from './engine'
 import {
-  QUIET_FROM_METERS,
-  QUIET_UNTIL_METERS,
-  SLOWMO_MIN,
-  SWITCH_METERS,
   boxesOverlap,
   cameraPose,
-  can3D,
+  availability3D,
   obstacleBox,
   playerBox,
-  quietForSwitch,
-  swingTimeScale,
   worldY,
 } from './view3d'
-
-describe('swingTimeScale', () => {
-  it('is 1 at both ends and SLOWMO_MIN in the middle', () => {
-    expect(swingTimeScale(0)).toBe(1)
-    expect(swingTimeScale(1)).toBeCloseTo(1, 10)
-    expect(swingTimeScale(0.5)).toBeCloseTo(SLOWMO_MIN, 10)
-  })
-
-  it('stays between SLOWMO_MIN and 1 and has no jumps', () => {
-    let prev = swingTimeScale(-0.5)
-    for (let t = -0.5; t <= 1.5; t += 0.001) {
-      const s = swingTimeScale(t)
-      expect(s).toBeGreaterThanOrEqual(SLOWMO_MIN - 1e-9)
-      expect(s).toBeLessThanOrEqual(1)
-      expect(Math.abs(s - prev)).toBeLessThan(0.01)
-      prev = s
-    }
-  })
-})
 
 describe('cameraPose', () => {
   it('starts as a side view that frames the 2D board', () => {
@@ -193,28 +167,26 @@ describe('world boxes', () => {
   })
 })
 
-describe('can3D', () => {
-  it('needs WebGL and no reduced motion', () => {
-    expect(can3D({ webgl: false, reducedMotion: false })).toBe(false)
-    expect(can3D({ webgl: true, reducedMotion: true })).toBe(false)
-    expect(can3D({ webgl: false, reducedMotion: true })).toBe(false)
-    expect(can3D({ webgl: true, reducedMotion: false })).toBe(true)
-  })
-})
+describe('availability3D', () => {
+  const base = { webgl: true, loadFailed: false, reducedMotion: false }
 
-describe('quiet around the switch', () => {
-  it('stops spawning early enough that the 2D board is empty when the swing starts, until 250 m', () => {
-    expect(QUIET_UNTIL_METERS).toBe(250)
-    expect(QUIET_FROM_METERS).toBeLessThan(SWITCH_METERS)
-    // An obstacle spawned just before QUIET_FROM_METERS travels this far by SWITCH_METERS and must
-    // be past x = 0 by then
-    const widest = Math.max(...OBSTACLES.map((o) => o.make().w))
-    expect((SWITCH_METERS - QUIET_FROM_METERS) * UNITS_PER_POINT).toBeGreaterThanOrEqual(WIDTH + widest)
-    // ...but no more than a couple of meters early
-    expect((SWITCH_METERS - QUIET_FROM_METERS - 1) * UNITS_PER_POINT).toBeLessThan(WIDTH + widest)
+  it('is ok with WebGL, a loaded scene and no reduced motion', () => {
+    expect(availability3D(base)).toBe('ok')
   })
 
-  it('sets the quiet window on the run', () => {
-    expect(quietForSwitch(startGame()).quiet).toEqual({ from: QUIET_FROM_METERS, until: QUIET_UNTIL_METERS })
+  it('names the reason when 3D is not possible', () => {
+    expect(availability3D({ ...base, webgl: false })).toBe('no-webgl')
+    expect(availability3D({ ...base, loadFailed: true })).toBe('load-failed')
+    expect(availability3D({ ...base, reducedMotion: true })).toBe('reduced-motion')
+  })
+
+  it('puts no WebGL before a failed load, and a failed load before reduced motion', () => {
+    expect(availability3D({ webgl: false, loadFailed: true, reducedMotion: true })).toBe('no-webgl')
+    expect(availability3D({ webgl: true, loadFailed: true, reducedMotion: true })).toBe('load-failed')
+  })
+
+  it('is ok again once reduced motion is turned off, if nothing else is wrong', () => {
+    expect(availability3D({ ...base, reducedMotion: true })).toBe('reduced-motion')
+    expect(availability3D({ ...base, reducedMotion: false })).toBe('ok')
   })
 })
