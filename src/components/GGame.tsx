@@ -318,6 +318,11 @@ function GGame({ id, onClose }: GGameProps) {
       handleInput()
       return
     }
+    if ((e.key === 'f' || e.key === 'F') && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault()
+      toggleFullscreen()
+      return
+    }
     const steer = STEER_KEYS[e.key]
     if (steer && canSteer()) {
       e.preventDefault()
@@ -504,7 +509,8 @@ function GGame({ id, onClose }: GGameProps) {
               type="button"
               onClick={toggleFullscreen}
               aria-label={isFull ? 'Luk fuld skærm' : 'Fuld skærm'}
-              title={isFull ? 'Luk fuld skærm' : 'Fuld skærm'}
+              aria-keyshortcuts="F"
+              title={isFull ? 'Luk fuld skærm (F)' : 'Fuld skærm (F)'}
               className="flex items-center justify-center rounded-control-pill bg-button-secondary-background p-2 text-icon-default transition hover:bg-state-hover-neutral"
             >
               {isFull ? (
