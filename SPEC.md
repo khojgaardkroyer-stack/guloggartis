@@ -1,8 +1,8 @@
 # SikkerHandel SPA: næste skridt
 
 Det her er opgaverne for resten af ugen. Du vælger selv rækkefølgen og behøver ikke nå det hele. De eneste faste
-afhængigheder er, at Opgave 4 kræver Opgave 1, Opgave 8 og 9 kræver Opgave 3, og Opgave 10 kræver Opgave 4. Lav én
-pull request pr. opgave mod `main`.
+afhængigheder er, at Opgave 4 kræver Opgave 1, Opgave 8 og 9 kræver Opgave 3, Opgave 10 kræver Opgave 4, og
+Opgave 11 kræver Opgave 10. Lav én pull request pr. opgave mod `main`.
 
 **Forslag til rækkefølge:** tag dem i nummerrækkefølge og ekstraopgaverne til sidst. Opgave 0 er hurtig at komme i
 gang med. Opgave 2 tidligt betyder, at det, du bygger i de andre opgaver, er i det rigtige design fra start i stedet
@@ -24,8 +24,8 @@ sætter den opgaven til `Færdig` og laver PR'en. Skriver du en beskrivelse i st
 - `npm run lint` og `npm run build` skal køre uden fejl på hver PR.
 - Siden skal virke på en telefon (375 px bred) og på desktop. Tjek begge, før du beder om review.
 - Tilføj ikke en afhængighed, hvis et par linjer kode kan klare det. Når du tilføjer en, så skriv hvorfor i PR'en.
-- Opgave 1, 5, 6 og 10 har tests. Den første af dem, du laver, sætter Vitest op (`npm run test`) og kører det i
-  deploy-workflowet sammen med lint.
+- Opgave 1, 5, 6, 10 og 11 har tests. Den første af dem, du laver, sætter Vitest op (`npm run test`) og kører det
+  i deploy-workflowet sammen med lint.
 - Når Opgave 2 er lavet, bruger al ny UI tokens og komponenter fra designmanualen.
 - Hold siden hurtig. 3D-biblioteket (Opgave 4) må ikke gøre forsidens første indlæsning langsommere.
 
@@ -410,6 +410,34 @@ starter med en kort kamerabevægelse.
 - Uden WebGL eller med "reducer bevægelse" er 3D-knappen slået fra med en forklaring, og 2D kan spilles.
 - Forsidens første JavaScript-indlæsning er omtrent lige så stor som før opgaven (skriv størrelsen før og efter i
   PR'en).
+
+---
+
+## Opgave 11: 3D kan spilles med "reducer bevægelse"
+
+**Status:** Ikke startet
+
+**Mål:** den besøgende kan spille 3D, også når "reducer bevægelse" er slået til i styresystemet.
+
+**Kræver:** Opgave 10.
+
+**Besluttet**
+
+- "Reducer bevægelse" påvirker ikke længere spillets 3D. 3D-knappen og "Skift til 3D" virker, og 3D spiller præcis
+  som ellers, med kameradrejningen i starten.
+- Forklaringen "3D er slået fra, fordi du har valgt mindre bevægelse." forsvinder.
+- 3D er stadig slået fra med forklaring, når browseren ikke kan WebGL, eller 3D-koden ikke kan hentes.
+- Det ændrer reglen om "reducer bevægelse" i Opgave 4 og Opgave 10 for spillets 3D. Andre animationer, fx når
+  spillet folder sig ud fra G'et, følger stadig indstillingen.
+- Opdatér testene af, hvornår 3D er tilgængeligt.
+
+**Op til dig:** hvordan koden ryddes op, nu hvor 3D ikke længere skal følge indstillingen.
+
+**Færdig når**
+
+- Med "reducer bevægelse" slået til kan et 3D-løb startes og spilles, med kameradrejningen.
+- Uden WebGL, eller når 3D-koden ikke kan hentes, er 3D-knappen stadig slået fra med forklaring.
+- Folde-animationen fra G'et følger stadig "reducer bevægelse".
 
 ---
 
