@@ -1,8 +1,8 @@
 # SikkerHandel SPA: næste skridt
 
 Det her er opgaverne for resten af ugen. Du vælger selv rækkefølgen og behøver ikke nå det hele. De eneste faste
-afhængigheder er, at Opgave 4 kræver Opgave 1, og Opgave 8 og 9 kræver Opgave 3. Lav én pull request pr. opgave mod
-`main`.
+afhængigheder er, at Opgave 4 kræver Opgave 1, Opgave 8 og 9 kræver Opgave 3, og Opgave 10 kræver Opgave 4. Lav én
+pull request pr. opgave mod `main`.
 
 **Forslag til rækkefølge:** tag dem i nummerrækkefølge og ekstraopgaverne til sidst. Opgave 0 er hurtig at komme i
 gang med. Opgave 2 tidligt betyder, at det, du bygger i de andre opgaver, er i det rigtige design fra start i stedet
@@ -24,7 +24,7 @@ sætter den opgaven til `Færdig` og laver PR'en. Skriver du en beskrivelse i st
 - `npm run lint` og `npm run build` skal køre uden fejl på hver PR.
 - Siden skal virke på en telefon (375 px bred) og på desktop. Tjek begge, før du beder om review.
 - Tilføj ikke en afhængighed, hvis et par linjer kode kan klare det. Når du tilføjer en, så skriv hvorfor i PR'en.
-- Opgave 1, 5 og 6 har tests. Den første af dem, du laver, sætter Vitest op (`npm run test`) og kører det i
+- Opgave 1, 5, 6 og 10 har tests. Den første af dem, du laver, sætter Vitest op (`npm run test`) og kører det i
   deploy-workflowet sammen med lint.
 - Når Opgave 2 er lavet, bruger al ny UI tokens og komponenter fra designmanualen.
 - Hold siden hurtig. 3D-biblioteket (Opgave 4) må ikke gøre forsidens første indlæsning langsommere.
@@ -373,6 +373,43 @@ overgang.
 - Et eller to tryk, eller tre langsomme, gør ingenting, og logoet fører ikke væk fra siden.
 - Baggrunden er tilbage til gul efter en genindlæsning.
 - Det virker med touch på en telefon (375 px) og med mus på desktop.
+
+---
+
+## Opgave 10: 2D og 3D som hver sin spiltype
+
+**Status:** Ikke startet
+
+**Mål:** den besøgende vælger selv, om spillet skal køre i 2D eller 3D, i stedet for at det skifter til 3D efter
+200 meter.
+
+**Kræver:** Opgave 4.
+
+**Besluttet**
+
+- Startskærmen viser to knapper, **2D** og **3D**, i stedet for "Tryk for at starte".
+- Skiftet ved 200 m fjernes. 2D er 2D hele løbet, som spillet var før Opgave 4. 3D er 3D fra 0 m med de tre baner,
+  styring og varevogne og tårne, som i dag efter skiftet.
+- Begge spiltyper vindes ved `WIN_SCORE` (2000), og afslutningen ved pakkeshoppen virker i begge.
+- 2D og 3D har hver sin rekord (HI). Den rekord, der vises, hører til den valgte spiltype.
+- Når man har tabt eller vundet, starter ét tryk et nyt løb i samme spiltype. En knap "Skift til 2D"/"Skift til
+  3D" skifter.
+- Kan browseren ikke WebGL, eller har den besøgende slået "reducer bevægelse" til, er 3D-knappen slået fra med en
+  kort forklaring. 2D virker altid.
+- 3D-koden indlæses stadig først, når der er brug for den. Forsidens første indlæsning må ikke indeholde den.
+- Det virker på forsiden og på 404-siden, i fuld skærm, med tastatur og med touch.
+- Opdatér spillets tests, så de dækker, at et 2D-løb aldrig går i banetilstand, og at et 3D-løb starter i den.
+
+**Op til dig:** hvordan knapperne og "Skift til"-knappen ser ud, hvad der vises, mens 3D-koden hentes, og om 3D
+starter med en kort kamerabevægelse.
+
+**Færdig når**
+
+- Et helt løb fra 0 til `WIN_SCORE` virker i begge spiltyper på desktop og telefon, uden skift ved 200 m.
+- Rekorden for 2D og 3D gemmes og vises hver for sig.
+- Uden WebGL eller med "reducer bevægelse" er 3D-knappen slået fra med en forklaring, og 2D kan spilles.
+- Forsidens første JavaScript-indlæsning er omtrent lige så stor som før opgaven (skriv størrelsen før og efter i
+  PR'en).
 
 ---
 
