@@ -378,7 +378,7 @@ overgang.
 
 ## Opgave 10: 2D og 3D som hver sin spiltype
 
-**Status:** I gang
+**Status:** Færdig
 
 **Mål:** den besøgende vælger selv, om spillet skal køre i 2D eller 3D, i stedet for at det skifter til 3D efter
 200 meter.
